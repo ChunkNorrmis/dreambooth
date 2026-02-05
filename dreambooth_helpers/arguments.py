@@ -24,106 +24,76 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             default=None,
             help="A config file containing all of your variables"
         )
-
         parser.add_argument(
             "--project_name",
             type=str,
-            required=False,
+            required=True,
             default=None,
             help="Name of the project"
         )
         parser.add_argument(
             "--debug",
-            type=str2bool,
-            nargs="?",
-            const=True,
-            default=False,
-            help="Enable debug logging",
+            action='store_true'
         )
         parser.add_argument(
             "--seed",
             type=int,
-            default=23,
+            default=1337,
             help="seed for seed_everything",
         )
-
-        parser.add_argument(
-            "--max_training_steps",
-            type=int,
-            required=False,
-            help="Number of training steps to run"
-        )
-
         parser.add_argument(
             "--token",
             type=str,
-            required=False,
+            required=True,
             help="Unique token you want to represent your trained model. Ex: firstNameLastName."
         )
-
         parser.add_argument(
             "--token_only",
-            type=str2bool,
-            const=True,
-            default=False,
-            nargs="?",
+            action='store_true',
             help="Train only using the token and no class."
         )
-
         parser.add_argument(
             "--training_model",
             type=str,
-            required=False,
-            help="Path to model to train (model.ckpt)"
+            required=False
         )
 
         parser.add_argument(
-            "--training_images",
+            "--train_images",
             type=str,
-            required=False,
+            required=True,
             help="Path to training images directory"
         )
-
         parser.add_argument(
-            "--regularization_images",
+            "--reg_images",
             type=str,
-            required=False,
-            help="Path to directory with regularization images"
+            required=False
         )
         parser.add_argument(
             "--class_word",
             type=str,
-            required=False,
-            help="Match class_word to the category of images you want to train. Example: 'man', 'woman', 'dog', or 'artstyle'."
+            required=False
         )
-
         parser.add_argument(
             "--flip_p",
             type=float,
             required=False,
-            default=0.5,
-            help="Flip Percentage "
-                 "Example: if set to 0.5, will flip (mirror) your training images 50% of the time."
-                 "This helps expand your dataset without needing to include more training images."
-                 "This can lead to worse results for face training since most people's faces are not perfectly symmetrical."
+            default=0.0
         )
-
         parser.add_argument(
             "--learning_rate",
             type=float,
             required=False,
-            default=1.0e-06,
+            default=1.0e-6,
             help="Set the learning rate. Defaults to 1.0e-06 (0.000001).  Accepts scientific notation."
         )
-
         parser.add_argument(
             "--save_every_x_steps",
             type=int,
             required=False,
-            default=0,
+            default=1500,
             help="Saves a checkpoint every x steps"
         )
-
         parser.add_argument(
             "--gpu",
             type=int,
@@ -131,9 +101,61 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             required=False,
             help="Specify a GPU other than 0 to use for training.  Multi-GPU support is not currently implemented."
         )
-
+        parser.add_argument(
+            "--batch_size",
+            type=int,
+            required=False,
+            default=1,
+            help="image batch size and number of epochs to perform for iterable datasets"
+        )
+        parser.add_argument(
+            "--epochs",
+            type=int,
+            required=False,
+            default=100
+        )
+        parser.add_argument(
+            "--val_iters",
+            type=int,
+            required=False,
+            default=10,
+            help="number of validating iterations to perform per image duirng validation split"
+        )
+        parser.add_argument(
+            "--reg_iters",
+            type=int,
+            required=False,
+            default=10,
+            help="number of regularizing iterations to perform per image during training phase split"
+        )
+        parser.add_argument(
+            "--resolution",
+            type=int,
+            required=False,
+            default=512
+        )
+        parser.add_argument(
+            "--resampler",
+            type=str,
+            required=False,
+            choices=["bilinear", "bicubic", "lanczos"],
+            default="lanczos"
+        )
+        parser.add_argument(
+            "--center_crop",
+            action="store_true",
+            help="make ANY polygon your new favorite rhomboid!!!11!1"
+        )
+        parser.add_argument(
+            "--accum_grads",
+            type=int,
+            required=False,
+            default=1,
+            help="Number of forward pass iteration gradients to process as a single iteration: 1 global training step = (1 x accum_grad) iterations"
+        )
         return parser
 
+    
     parser = _get_parser()
     opt, unknown = parser.parse_known_args()
 
@@ -147,10 +169,9 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             seed=opt.seed,
             debug=opt.debug,
             gpu=opt.gpu,
-            max_training_steps=opt.max_training_steps,
             save_every_x_steps=opt.save_every_x_steps,
-            training_images_folder_path=opt.training_images,
-            regularization_images_folder_path=opt.regularization_images,
+            training_images_folder_path=opt.train_images,
+            regularization_images_folder_path=opt.reg_images,
             token=opt.token,
             token_only=opt.token_only,
             class_word=opt.class_word,
@@ -158,6 +179,14 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             learning_rate=opt.learning_rate,
             model_repo_id='',
             model_path=opt.training_model,
+            epochs=opt.epochs,
+            batch_size=opt.batch_size,
+            regularization_iterations=opt.reg_iters,
+            validation_iterations=opt.val_iters,
+            resampler=opt.resampler,
+            resolution=opt.resolution,
+            center_crop=opt.center_crop,
+            accumulated_gradients=opt.accum_grads,
         )
 
     return config
