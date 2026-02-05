@@ -138,8 +138,8 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             "--resampler",
             type=str,
             required=False,
-            choices=["bilinear", "bicubic", "lanczos"],
-            default="lanczos"
+            choices=["bilinear", "bicubic", "area"],
+            default="area"
         )
         parser.add_argument(
             "--center_crop",
