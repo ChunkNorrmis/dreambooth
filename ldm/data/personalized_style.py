@@ -56,12 +56,12 @@ per_img_token_list = [
 class PersonalizedBase(Dataset):
     def __init__(self,
                  data_root,
-                 size=None,
+                 size=512,
                  repeats=100,
-                 interpolation="bicubic",
-                 flip_p=0.5,
+                 resampler='lanczos',
+                 flip_p=0.0,
                  set="train",
-                 placeholder_token="*",
+                 placeholder_token=None,
                  per_image_tokens=False,
                  center_crop=False,
                  ):
@@ -86,11 +86,11 @@ class PersonalizedBase(Dataset):
             self._length = self.num_images * repeats
 
         self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
-                              "bilinear": PIL.Image.BILINEAR,
-                              "bicubic": PIL.Image.BICUBIC,
-                              "lanczos": PIL.Image.LANCZOS,
-                              }[interpolation]
+        self.interpolation = {'linear': cv2.INTER_LINEAR,
+                              'cubic': cv2.INTER_CUBIC,
+                              'area': cv2.INTER_AREA,
+                              'lanczos': cv2.INTER_LANCZOS
+                              }[resampler]
         self.flip = transforms.RandomHorizontalFlip(p=flip_p)
 
     def __len__(self):
@@ -107,23 +107,18 @@ class PersonalizedBase(Dataset):
             text = random.choice(imagenet_dual_templates_small).format(self.placeholder_token, per_img_token_list[i % self.num_images])
         else:
             text = random.choice(imagenet_templates_small).format(self.placeholder_token)
-            
         example["caption"] = text
-
-        # default to score-sde preprocessing
-        img = np.array(image).astype(np.uint8)
         
-        if self.center_crop:
-            crop = min(img.shape[0], img.shape[1])
-            h, w, = img.shape[0], img.shape[1]
-            img = img[(h - crop) // 2:(h + crop) // 2,
-                (w - crop) // 2:(w + crop) // 2]
-
-        image = Image.fromarray(img)
-        if self.size is not None:
-            image = image.resize((self.size, self.size), resample=self.interpolation)
-
         image = self.flip(image)
+        
         image = np.array(image).astype(np.uint8)
-        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
+        if self.center_crop:
+            H, W = image.shape[0], image.shape[1]
+            _max = min(H, W)
+            image = image[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
+
+        if self.size is not None:
+            image = cv2.resize(image, dsize=(self.size, self.size), interpolation=self.interpolation)
+
+example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         return example
