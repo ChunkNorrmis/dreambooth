@@ -2,6 +2,7 @@ import os
 from typing import OrderedDict
 import numpy as np
 import PIL
+import cv2
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -16,9 +17,9 @@ class PersonalizedBase(Dataset):
     def __init__(self,
                  data_root,
                  size=None,
-                 repeats=100,
-                 interpolation="bicubic",
-                 flip_p=0.5,
+                 repeats=None,
+                 resampler=None,
+                 flip_p=0.0,
                  set="train",
                  placeholder_token="dog",
                  per_image_tokens=False,
@@ -26,23 +27,18 @@ class PersonalizedBase(Dataset):
                  mixing_prob=0.25,
                  coarse_class_text=None,
                  token_only=False,
-                 reg=False
+                 reg=False                 
                  ):
 
         self.data_root = data_root
-
         self.image_paths = find_images(self.data_root)
-
-        # self._length = len(self.image_paths)
         self.num_images = len(self.image_paths)
         self._length = self.num_images
-
         self.placeholder_token = placeholder_token
         self.token_only = token_only
         self.per_image_tokens = per_image_tokens
         self.center_crop = center_crop
         self.mixing_prob = mixing_prob
-
         self.coarse_class_text = coarse_class_text
 
         if per_image_tokens:
@@ -53,11 +49,11 @@ class PersonalizedBase(Dataset):
             self._length = self.num_images * repeats
 
         self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
-                              "bilinear": PIL.Image.BILINEAR,
-                              "bicubic": PIL.Image.BICUBIC,
-                              "lanczos": PIL.Image.LANCZOS,
-                              }[interpolation]
+        self.interpolation = {"linear": cv2.INTER_LINEAR,
+                              "cubic": cv2.INTER_CUBIC,
+                              "area": cv2.INTER_AREA
+                              }[resampler]
+                     
         self.flip = transforms.RandomHorizontalFlip(p=flip_p)
         self.reg = reg
         if self.reg and self.coarse_class_text:
@@ -80,21 +76,16 @@ class PersonalizedBase(Dataset):
         else:
             example["caption"] = caption_from_path(image_path, self.data_root, self.coarse_class_text, self.placeholder_token)
 
-        # default to score-sde preprocessing
-        img = np.array(image).astype(np.uint8)
-
-        if self.center_crop:
-            crop = min(img.shape[0], img.shape[1])
-            h, w, = img.shape[0], img.shape[1]
-            img = img[(h - crop) // 2:(h + crop) // 2,
-                      (w - crop) // 2:(w + crop) // 2]
-
-        image = Image.fromarray(img)
-        if self.size is not None:
-            image = image.resize((self.size, self.size),
-                                 resample=self.interpolation)
-
         image = self.flip(image)
         image = np.array(image).astype(np.uint8)
+        
+        if self.center_crop:
+            H, W = image.shape[0], image.shape[1]
+            _max = min(H, W)
+            image = image[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
+
+        if self.size is not None:
+            image = cv2.resize(image, dsize=(self.size, self.size), interpolation=self.interpolation)
+            
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         return example
