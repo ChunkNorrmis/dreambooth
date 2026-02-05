@@ -98,10 +98,8 @@ class PersonalizedBase(Dataset):
 
     def __getitem__(self, i):
         example = {}
-        image = Image.open(self.image_paths[i % self.num_images])
-
-        if not image.mode == "RGB":
-            image = image.convert("RGB")
+        im_path = self.image_paths[i % self.num_images]
+        image = cv2.imread(im_path)
 
         if self.per_image_tokens and np.random.uniform() < 0.25:
             text = random.choice(imagenet_dual_templates_small).format(self.placeholder_token, per_img_token_list[i % self.num_images])
@@ -111,7 +109,6 @@ class PersonalizedBase(Dataset):
         
         image = self.flip(image)
         
-        image = np.array(image).astype(np.uint8)
         if self.center_crop:
             H, W = image.shape[0], image.shape[1]
             _max = min(H, W)
@@ -120,5 +117,7 @@ class PersonalizedBase(Dataset):
         if self.size is not None:
             image = cv2.resize(image, dsize=(self.size, self.size), interpolation=self.interpolation)
 
-example["image"] = (image / 127.5 - 1.0).astype(np.float32)
+        image = cv2.cvtColor(image, cv2.COLORBGR2RGB)
+        image = np.array(image).astype(np.uint8)
+        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         return example
