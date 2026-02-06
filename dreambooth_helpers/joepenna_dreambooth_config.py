@@ -121,7 +121,7 @@ class JoePennaDreamboothConfigSchemaV1():
         self.learning_rate = learning_rate
         self.model_repo_id = model_repo_id
 
-        self.model_path = model_path
+        self.model_path = os.path.relpath(model_path)
         if not os.path.exists(self.model_path):
             raise Exception(f"Model Path Not Found: '{self.model_path}'.")
 
