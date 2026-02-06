@@ -16,14 +16,14 @@ per_img_token_list = [
 class PersonalizedBase(Dataset):
     def __init__(self,
                  data_root,
-                 size=None,
-                 repeats=None,
-                 resampler=None,
+                 size,
+                 repeats,
+                 resampler='area',
                  flip_p=0.0,
                  set="train",
                  placeholder_token="dog",
                  per_image_tokens=False,
-                 center_crop=False,
+                 center_crop=True,
                  mixing_prob=0.25,
                  coarse_class_text=None,
                  token_only=False,
@@ -74,12 +74,13 @@ class PersonalizedBase(Dataset):
             example["caption"] = caption_from_path(image_path, self.data_root, self.coarse_class_text, self.placeholder_token)
 
         image = self.flip(image)
-        if self.center_crop:
+        
+        if self.center_crop and image.shape[0] != image.shape[1]:
             H, W = image.shape[0], image.shape[1]
             _max = min(H, W)
             image = image[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
 
-        if self.size is not None:
+        if self.size is not None and image.shape[0] > self.size:
             image = cv2.resize(image, dsize=(self.size, self.size), interpolation=self.interpolation)
         
         image = cv2.cvtColor(image, cv2.COLORBGR2RGB)
