@@ -56,9 +56,9 @@ per_img_token_list = [
 class PersonalizedBase(Dataset):
     def __init__(self,
                  data_root,
-                 size=512,
-                 repeats=100,
-                 resampler='lanczos',
+                 size,
+                 repeats,
+                 resampler='area',
                  flip_p=0.0,
                  set="train",
                  placeholder_token=None,
@@ -109,15 +109,16 @@ class PersonalizedBase(Dataset):
         
         image = self.flip(image)
         
-        if self.center_crop:
+        if self.center_crop and image.shape[0] != image.shape[1]:
             H, W = image.shape[0], image.shape[1]
             _max = min(H, W)
             image = image[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
 
-        if self.size is not None:
+        if self.size is not None and image.shape[0] > self.size:
             image = cv2.resize(image, dsize=(self.size, self.size), interpolation=self.interpolation)
-
+        
         image = cv2.cvtColor(image, cv2.COLORBGR2RGB)
         image = np.array(image).astype(np.uint8)
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
+        
         return example
