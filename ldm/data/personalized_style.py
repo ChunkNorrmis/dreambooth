@@ -58,8 +58,8 @@ class PersonalizedBase(Dataset):
                  data_root,
                  size,
                  repeats,
-                 resampler='area',
-                 flip_p=0.0,
+                 resampler='lanczos',
+                 flip_p=0.5,
                  set="train",
                  placeholder_token=None,
                  per_image_tokens=False,
@@ -86,12 +86,12 @@ class PersonalizedBase(Dataset):
             self._length = self.num_images * repeats
 
         self.size = size
-        self.interpolation = {'linear': cv2.INTER_LINEAR,
-                              'cubic': cv2.INTER_CUBIC,
-                              'area': cv2.INTER_AREA,
-                              'lanczos': cv2.INTER_LANCZOS
+        self.inter = {'bilinear': Resampling.BILINEAR,
+                              'bicubic': Resampling.BICUBIC,
+                              'nearest': Resampling.NEAREST,
+                              'lanczos': Resampling.LANCZOS
                               }[resampler]
-        self.flip = transforms.RandomHorizontalFlip(p=flip_p)
+        self.aug = flip_p * 100
 
     def __len__(self):
         return self._length
@@ -99,7 +99,9 @@ class PersonalizedBase(Dataset):
     def __getitem__(self, i):
         example = {}
         im_path = self.image_paths[i % self.num_images]
-        image = cv2.imread(im_path)
+        image = Image.open(im_path, 'r')
+
+        image = image.mode('RGB')
 
         if self.per_image_tokens and np.random.uniform() < 0.25:
             text = random.choice(imagenet_dual_templates_small).format(self.placeholder_token, per_img_token_list[i % self.num_images])
@@ -107,18 +109,34 @@ class PersonalizedBase(Dataset):
             text = random.choice(imagenet_templates_small).format(self.placeholder_token)
         example["caption"] = text
         
-        image = self.flip(image)
+        image = np.array(image).astype(np.uint8)
         
         if self.center_crop and image.shape[0] != image.shape[1]:
             H, W = image.shape[0], image.shape[1]
             _max = min(H, W)
             image = image[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
 
-        if self.size is not None and image.shape[0] > self.size:
-            image = cv2.resize(image, dsize=(self.size, self.size), interpolation=self.interpolation)
+        image = Image.fromarray(image)
+
+        if self.size is not None and image.width > self.size:
+            image = image.resize((self.size, self.size), resample=self.inter, reducing_gap=3)
         
-        image = cv2.cvtColor(image, cv2.COLORBGR2RGB)
+        if randint(0-100) < self.aug:
+            image = image.transpose(method=Transpose.FLIP_LEFT_RIGHT),
+        
+        if randint(0-100) < self.aug:
+            image = image.transpose(method=Transpose.TOP_TO_BOTTOM),            
+        
+        if randint(0-100) < self.aug:
+            if randint(0-100) < 50:
+                image = image.sharpen(image).enhance(1.4)
+            elif randint(0-100) >= 50:
+                image = image.sharpen(image).enhance(0.65)
+        
+        if randint(0-100) < self.aug:
+            image = image.rotate(angle=float(randint(0, 45)), resampling=self.inter)
+        
         image = np.array(image).astype(np.uint8)
-        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         
+        example["image"] = (image / 127.5 - 1.0).astype(np.float32)        
         return example
