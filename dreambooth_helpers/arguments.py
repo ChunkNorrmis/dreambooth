@@ -1,5 +1,4 @@
-import argparse
-
+import os, sys, shutil, json, argparse
 from dreambooth_helpers.joepenna_dreambooth_config import JoePennaDreamboothConfigSchemaV1
 
 
@@ -16,20 +15,15 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
                 raise argparse.ArgumentTypeError("Boolean value expected.")
 
         parser = argparse.ArgumentParser(**parser_kwargs)
-
+        parser.add_argument(
+            "project_name",
+            type=str
+        )
         parser.add_argument(
             "--config_file_path",
             type=str,
             required=False,
-            default=None,
             help="A config file containing all of your variables"
-        )
-        parser.add_argument(
-            "--project_name",
-            type=str,
-            required=True,
-            default=None,
-            help="Name of the project"
         )
         parser.add_argument(
             "--debug",
@@ -78,7 +72,7 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             "--flip_p",
             type=float,
             required=False,
-            default=0.0
+            default=0.5
         )
         parser.add_argument(
             "--learning_rate",
@@ -91,7 +85,7 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             "--save_every_x_steps",
             type=int,
             required=False,
-            default=1500,
+            default=500,
             help="Saves a checkpoint every x steps"
         )
         parser.add_argument(
@@ -109,8 +103,9 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             help="image batch size and number of epochs to perform for iterable datasets"
         )
         parser.add_argument(
-            "--epochs",
+            "--epochs", '--repeats',
             type=int,
+            meta='--repears',
             required=False,
             default=100
         )
@@ -138,7 +133,7 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             "--resampler",
             type=str,
             required=False,
-            choices=["bilinear", "bicubic", "area"],
+            choices=["linear", "cubic", "area", 'lanczos'],
             default="area"
         )
         parser.add_argument(
@@ -162,7 +157,40 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
     config = JoePennaDreamboothConfigSchemaV1()
 
     if opt.config_file_path is not None:
-        config.saturate_from_file(config_file_path=opt.config_file_path)
+        config_file_path=opt.config_file_path)
+        if not os.path.exists(config_file_path):
+            print(f"{config_file_path} not found.", file=sys.stderr)
+            return None
+        else:
+            config_file = open(config_file_path)
+            config_parsed = json.load(config_file)
+            if config_parsed['schema'] == 1:
+                config(
+                    project_name=config_parsed['project_name'],
+                    max_training_steps=config_parsed['max_training_steps'],
+                    save_every_x_steps=config_parsed['save_every_x_steps'],
+                    training_images_folder_path=config_parsed['training_images_folder_path'],
+                    regularization_images_folder_path=config_parsed['regularization_images_folder_path'],
+                    token=config_parsed['token'],
+                    class_word=config_parsed['class_word'],
+                    flip_percent=config_parsed['flip_percent'],
+                    learning_rate=config_parsed['learning_rate'],
+                    model_path=config_parsed['model_path'],
+                    config_date_time=config_parsed['config_date_time'],
+                    seed=config_parsed['seed'],
+                    debug=config_parsed['debug'],
+                    gpu=config_parsed['gpu'],
+                    model_repo_id=config_parsed['model_repo_id'],
+                    token_only=config_parsed['token_only'],
+                    resolution=config_parsed['resolution'],
+                    batch_size=config_parsed['batch_size'],
+                    accumulated_gradients=config_parsed['accum_grads'],
+                    resampler=config_parsed['resampler'],
+                    epochs=config_parsed['repeats'],
+                    center_crop=config_parsed['center_crop']
+                )
+            else:
+                print(f"Unrecognized schema: {config_parsed['schema']}", file=sys.stderr)
     else:
         config(
             project_name=opt.project_name,
