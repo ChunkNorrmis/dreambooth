@@ -121,19 +121,19 @@ class PersonalizedBase(Dataset):
         if self.size is not None and image.width > self.size:
             image = image.resize((self.size, self.size), resample=self.inter, reducing_gap=3)
         
-        if randint(0-100) < self.aug:
-            image = image.transpose(method=Transpose.FLIP_LEFT_RIGHT),
+        if randint(0, 99) < self.aug:
+            if randint(0, 99) < 50:
+                image = image.transpose(method=Transpose.FLIP_LEFT_RIGHT),
+            elif randint(0, 99) >= 50:
+                image = image.transpose(method=Transpose.TOP_TO_BOTTOM),            
         
-        if randint(0-100) < self.aug:
-            image = image.transpose(method=Transpose.TOP_TO_BOTTOM),            
-        
-        if randint(0-100) < self.aug:
-            if randint(0-100) < 50:
+        if randint(0, 99) < self.aug:
+            if randint(0, 99) < 50:
                 image = image.sharpen(image).enhance(1.4)
-            elif randint(0-100) >= 50:
+            elif randint(0, 99) >= 50:
                 image = image.sharpen(image).enhance(0.65)
         
-        if randint(0-100) < self.aug:
+        if randint(0, 99) < self.aug:
             image = image.rotate(angle=float(randint(0, 45)), resampling=self.inter)
         
         image = np.array(image).astype(np.uint8)
