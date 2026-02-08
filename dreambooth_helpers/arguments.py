@@ -164,7 +164,7 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
     if opt.config_file_path is not None:
         config.saturate_from_file(config_file_path=opt.config_file_path)
     else:
-        config.saturate(
+        config(
             project_name=opt.project_name,
             seed=opt.seed,
             debug=opt.debug,
