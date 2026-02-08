@@ -48,7 +48,11 @@ class PersonalizedBase(Dataset):
             self._length = self.num_images * repeats
         self.aug = flip_p * 100
         self.size = size
-        self.inter = Resampling.LANCZOS
+        self.inter = {'bilinear': Resampling.BILINEAR,
+                              'bicubic': Resampling.BICUBIC,
+                              'nearest': Resampling.NEAREST,
+                              'lanczos': Resampling.LANCZOS
+                              }[resampler]
         
 
 
