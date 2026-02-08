@@ -1,8 +1,7 @@
-import os
+aimport os
 from typing import OrderedDict
 import numpy as np
 import PIL
-import cv2
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -19,7 +18,7 @@ class PersonalizedBase(Dataset):
                  size,
                  repeats,
                  resampler='area',
-                 flip_p=0.0,
+                 flip_p=0.5,
                  set="train",
                  placeholder_token="dog",
                  per_image_tokens=False,
@@ -47,15 +46,12 @@ class PersonalizedBase(Dataset):
 
         if set == "train":
             self._length = self.num_images * repeats
-
+        self.aug = flip_p * 100
         self.size = size
-        self.interpolation = {"linear": cv2.INTER_LINEAR,
-                              "cubic": cv2.INTER_CUBIC,
-                              "area": cv2.INTER_AREA
-                              }[resampler]
-                     
-        self.flip = transforms.RandomHorizontalFlip(p=flip_p)
-        self.reg = reg
+        self.inter = Resampling.LANCZOS
+        
+
+
         if self.reg and self.coarse_class_text:
             self.reg_tokens = OrderedDict([('C', self.coarse_class_text)])
 
@@ -65,25 +61,43 @@ class PersonalizedBase(Dataset):
     def __getitem__(self, i):
         example = {}
         image_path = self.image_paths[i % self.num_images]
-        image = cv2.imread(image_path)
-        
+        image = Image.open(image_path, 'r')
+
+        image = image.mode('RGB')
         example["caption"] = ""
         if self.reg and self.coarse_class_text:
             example["caption"] = generic_captions_from_path(image_path, self.data_root, self.reg_tokens)
         else:
             example["caption"] = caption_from_path(image_path, self.data_root, self.coarse_class_text, self.placeholder_token)
 
-        image = self.flip(image)
+        image = np.array(image).astype(np.uint8)
         
         if self.center_crop and image.shape[0] != image.shape[1]:
             H, W = image.shape[0], image.shape[1]
             _max = min(H, W)
             image = image[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
 
-        if self.size is not None and image.shape[0] > self.size:
-            image = cv2.resize(image, dsize=(self.size, self.size), interpolation=self.interpolation)
+        image = Image.fromarray(image)
+
+        if self.size is not None and image.width > self.size:
+            image = image.resize((self.size, self.size), resample=self.inter, reducing_gap=3)
         
-        image = cv2.cvtColor(image, cv2.COLORBGR2RGB)
+        if randint(0-100) < self.aug:
+            image = image.transpose(method=Transpose.FLIP_LEFT_RIGHT),
+        
+        if randint(0-100) < self.aug:
+            image = image.transpose(method=Transpose.TOP_TO_BOTTOM),            
+        
+        if randint(0-100) < self.aug:
+            if randint(0-100) < 50:
+                image = image.sharpen(image).enhance(1.4)
+            elif randint(0-100) >= 50:
+                image = image.sharpen(image).enhance(0.65)
+        
+        if randint(0-100) < self.aug:
+            image = image.rotate(angle=float(randint(0, 45)), resampling=self.inter)
+        
         image = np.array(image).astype(np.uint8)
+        
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         return example
