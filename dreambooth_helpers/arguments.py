@@ -164,8 +164,9 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
         else:
             config_file = open(config_file_path)
             config_parsed = json.load(config_file)
+            
             if config_parsed['schema'] == 1:
-                config(
+                return config(
                     project_name=config_parsed['project_name'],
                     max_training_steps=config_parsed['max_training_steps'],
                     save_every_x_steps=config_parsed['save_every_x_steps'],
@@ -188,11 +189,11 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
                     resampler=config_parsed['resampler'],
                     epochs=config_parsed['repeats'],
                     center_crop=config_parsed['center_crop']
-                )
+            )
             else:
                 print(f"Unrecognized schema: {config_parsed['schema']}", file=sys.stderr)
     else:
-        config(
+        return config(
             project_name=opt.project_name,
             seed=opt.seed,
             debug=opt.debug,
@@ -214,7 +215,6 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             resampler=opt.resampler,
             resolution=opt.resolution,
             center_crop=opt.center_crop,
-            accumulated_gradients=opt.accum_grads,
+            accumulated_gradients=opt.accum_grads
         )
 
-    return config
