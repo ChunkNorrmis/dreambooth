@@ -47,7 +47,7 @@ class PersonalizedBase(Dataset):
         
         if set == "train":
             self._length = self.num_images * repeats
-            self.aug = flip_p * 100
+            self.aug = flip_p * 10
         else:
             self.aug = 
         self.size = size
