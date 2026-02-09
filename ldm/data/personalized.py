@@ -16,22 +16,23 @@ per_img_token_list = [
 ]
 
 class PersonalizedBase(Dataset):
-    def __init__(self,
-                 data_root,
-                 size,
-                 repeats,
-                 resampler=,
-                 set,
-                 placeholder_token,
-                 per_image_tokens,
-                 center_crop,
-                 flip_p=0.5,
-                 mixing_prob=0.25,
-                 coarse_class_text=None,
-                 token_only=False,
-                 reg=False                 
-                 ):
-
+    def __init__(
+        self,
+        data_root,
+        size=512,
+        repeats=100,
+        resampler='bucubic',
+        set='train',
+        placeholder_token=None,
+        per_image_tokens=False,
+        center_crop=True,
+        flip_p=0.50,
+        mixing_prob=0.25,
+        coarse_class_text=None,
+        token_only=False,
+        reg=False                 
+    ):
+        super().__init__()
         self.data_root = data_root
         self.image_paths = find_images(self.data_root)
         self.num_images = len(self.image_paths)
@@ -43,24 +44,20 @@ class PersonalizedBase(Dataset):
         self.mixing_prob = mixing_prob
         self.coarse_class_text = coarse_class_text
         self.odds = flip_p
+        self.size = size
 
         if per_image_tokens:
-            assert self.num_images < len(
-                per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
-        
+            assert self.num_images < len(per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
+
         if set == "train":
             self._length = self.num_images * repeats
-        
-        self.size = size
-        self.inter = {
+
+        self.interp = {
             'bilinear': Resampling.BILINEAR,
             'bicubic': Resampling.BICUBIC,
             'nearest': Resampling.NEAREST,
             'lanczos': Resampling.LANCZOS
         }[resampler]
-
-        if self.reg and self.coarse_class_text:
-            self.reg_tokens = OrderedDict([('C', self.coarse_class_text)])
 
         self.augment = {
             'direction': {
@@ -76,6 +73,10 @@ class PersonalizedBase(Dataset):
             },
         }
 
+        if self.reg and self.coarse_class_text:
+            self.reg_tokens = OrderedDict([('C', self.coarse_class_text)])
+
+
     def __len__(self):
         return self._length
 
@@ -87,9 +88,9 @@ class PersonalizedBase(Dataset):
     def __getitem__(self, i):
         example = {}
         image_path = self.image_paths[i % self.num_images]
-        with Image.open(image_path, 'r') as image:
-            if image.mode != 'RGB':
-                image = image.mode('RGB')
+        image = Image.open(image_path, 'r')
+        if image.mode != 'RGB':
+            image = image.mode('RGB')
 
         example["caption"] = ""
         if self.reg and self.coarse_class_text:
@@ -118,3 +119,4 @@ class PersonalizedBase(Dataset):
         image = np.array(image).astype(np.uint8)
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         return example
+
