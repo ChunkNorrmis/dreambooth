@@ -8,6 +8,8 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from captionizer import caption_from_path, generic_captions_from_path
 from captionizer import find_images
+from random import randint, choice
+
 
 per_img_token_list = [
     'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת',
@@ -18,12 +20,12 @@ class PersonalizedBase(Dataset):
                  data_root,
                  size,
                  repeats,
-                 resampler='area',
+                 resampler=,
+                 set,
+                 placeholder_token,
+                 per_image_tokens,
+                 center_crop,
                  flip_p=0.5,
-                 set="train",
-                 placeholder_token="dog",
-                 per_image_tokens=False,
-                 center_crop=True,
                  mixing_prob=0.25,
                  coarse_class_text=None,
                  token_only=False,
@@ -40,6 +42,7 @@ class PersonalizedBase(Dataset):
         self.center_crop = center_crop
         self.mixing_prob = mixing_prob
         self.coarse_class_text = coarse_class_text
+        self.chance = flip_p
 
         if per_image_tokens:
             assert self.num_images < len(
@@ -47,59 +50,63 @@ class PersonalizedBase(Dataset):
         
         if set == "train":
             self._length = self.num_images * repeats
-            self.aug = flip_p * 10
-        else:
-            self.aug = 
-        self.size = size
-        self.inter = {'bilinear': Resampling.BILINEAR,
-                              'bicubic': Resampling.BICUBIC,
-                              'nearest': Resampling.NEAREST,
-                              'lanczos': Resampling.LANCZOS
-                              }[resampler]
         
-
+        self.size = size
+        self.inter = {
+            'bilinear': Resampling.BILINEAR,
+            'bicubic': Resampling.BICUBIC,
+            'nearest': Resampling.NEAREST,
+            'lanczos': Resampling.LANCZOS
+        }[resampler]
 
         if self.reg and self.coarse_class_text:
             self.reg_tokens = OrderedDict([('C', self.coarse_class_text)])
 
+
     def __len__(self):
         return self._length
+
+
+    def odds(self):
+        return f"{random.random():.2f}"
+
 
     def __getitem__(self, i):
         example = {}
         image_path = self.image_paths[i % self.num_images]
-        image = Image.open(image_path, 'r')
+        with Image.open(image_path, 'r') as image:
+            if image.mode != 'RGB':
+                image = image.mode('RGB')
 
-        image = image.mode('RGB')
         example["caption"] = ""
         if self.reg and self.coarse_class_text:
             example["caption"] = generic_captions_from_path(image_path, self.data_root, self.reg_tokens)
         else:
             example["caption"] = caption_from_path(image_path, self.data_root, self.coarse_class_text, self.placeholder_token)
 
-        image = np.array(image).astype(np.uint8)
-        
-        if self.center_crop and image.shape[0] != image.shape[1]:
-            H, W = image.shape[0], image.shape[1]
+        if self.center_crop and image.width != image.height:
+            img = np.array(image).astype(np.uint8)
+            H, W = img.shape[0], img.shape[1]
             _max = min(H, W)
-            image = image[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
+            img = img[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
+            image = Image.fromarray(img)
 
-        image = Image.fromarray(image)
-
-        if self.size is not None and image.width > self.size:
+        if image.width > self.size or image.height > self.size:
             image = image.resize((self.size, self.size), resample=self.inter, reducing_gap=3)
-        
-        if randint(0, 9) >= self.aug:
-            fl = {0: Transpose.FLIP_LEFT_RIGHT, 1: Transpose.TOP_TO_BOTTOM}
-            image = image.transpose(method=fl[choice([0, 1])])
-                        
-        if randint(0, 9) >= self.aug:
-            image = image.sharpen(image).enhance(choice([1.40, 0.65]))
-            
-        if randint(0, 9) >= self.aug:
-            image = image.rotate(angle=float(randint(0, 45)), resampling=self.inter)
-        
+
+        if self.chance > self.odds():
+            pick = choice(['flip', 'rotate'])
+            if pick != 'rotate':
+                flip = randint(0, 1)
+                image = image.transpose(flip)
+            elif pick != 'flip':
+                degrees = randrange(0, 360, step=45)
+                image = image.rotate(float(degrees), resampling=Resampling.BICUBIC, expand=True)
+                
+        if self.chance > self.odds():
+            sharpness = choice([1.5, 0.0])
+            image = sharpen(image).enhance(sharpness)
+
         image = np.array(image).astype(np.uint8)
-        
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         return example
