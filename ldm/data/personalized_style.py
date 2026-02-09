@@ -1,6 +1,7 @@
 import os
 import numpy as np
-import PIL, cv2
+import PIL
+from PIL.ImageEnhance import Sharpness as sharpen
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -91,7 +92,7 @@ class PersonalizedBase(Dataset):
                               'nearest': Resampling.NEAREST,
                               'lanczos': Resampling.LANCZOS
                               }[resampler]
-        self.aug = flip_p * 100
+        self.aug = flip_p * 10
 
     def __len__(self):
         return self._length
@@ -120,20 +121,15 @@ class PersonalizedBase(Dataset):
 
         if self.size is not None and image.width > self.size:
             image = image.resize((self.size, self.size), resample=self.inter, reducing_gap=3)
-        
-        if randint(0, 99) < self.aug:
-            if randint(0, 99) < 50:
-                image = image.transpose(method=Transpose.FLIP_LEFT_RIGHT),
-            elif randint(0, 99) >= 50:
-                image = image.transpose(method=Transpose.TOP_TO_BOTTOM),            
-        
-        if randint(0, 99) < self.aug:
-            if randint(0, 99) < 50:
-                image = image.sharpen(image).enhance(1.4)
-            elif randint(0, 99) >= 50:
-                image = image.sharpen(image).enhance(0.65)
-        
-        if randint(0, 99) < self.aug:
+                
+        if randint(0, 9) >= self.aug:
+            fl = {0: Transpose.FLIP_LEFT_RIGHT, 1: Transpose.TOP_TO_BOTTOM}
+            image = image.transpose(method=fl[choice([0, 1])])
+                        
+        if randint(0, 9) >= self.aug:
+            image = image.sharpen(image).enhance(choice([1.40, 0.65]))
+            
+        if randint(0, 9) >= self.aug:
             image = image.rotate(angle=float(randint(0, 45)), resampling=self.inter)
         
         image = np.array(image).astype(np.uint8)
