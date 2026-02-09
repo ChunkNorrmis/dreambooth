@@ -8,7 +8,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from captionizer import caption_from_path, generic_captions_from_path
 from captionizer import find_images
-from random import randint, choice
+from random import choice, random
 
 
 per_img_token_list = [
@@ -81,7 +81,7 @@ class PersonalizedBase(Dataset):
 
 
     def chance(self):
-        return random.randrange(0.0, 1.0, step=0.01)
+        return f"{random():.2f}"
 
 
     def __getitem__(self, i):
@@ -109,7 +109,7 @@ class PersonalizedBase(Dataset):
 
         if self.chance() >= self.odds:
             direction = choice(['h_flip', 'v_flip', '90_degree', '180_degree', '270_degree'])
-            image = image.transpose(self.augment['direction'][direction]
+            image = image.transpose(self.augment['direction'][direction])
                 
         if self.chance() >= self.odds:
             clarity = choice(['sharpen', 'blur'])
