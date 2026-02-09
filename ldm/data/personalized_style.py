@@ -5,7 +5,7 @@ from PIL.ImageEnhance import Sharpness as sharpen
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-from random import randint, choice, randrange
+from random import random, choice
 
 imagenet_templates_small = [
     'a painting in the style of {}',
@@ -56,10 +56,10 @@ per_img_token_list = [
 class PersonalizedBase(Dataset):
     def __init__(self,
                  data_root,
-                 size,
-                 repeats,
+                 size=512,
+                 repeats=100,
                  resampler='bicubic',
-                 flip_p=0.5,
+                 flip_p=0.50,
                  set="train",
                  placeholder_token=None,
                  per_image_tokens=False,
@@ -67,31 +67,28 @@ class PersonalizedBase(Dataset):
                  ):
 
         self.data_root = data_root
-
         self.image_paths = [os.path.join(self.data_root, file_path) for file_path in os.listdir(self.data_root)]
-
         # self._length = len(self.image_paths)
         self.num_images = len(self.image_paths)
         self._length = self.num_images 
-
         self.placeholder_token = placeholder_token
-
         self.per_image_tokens = per_image_tokens
         self.center_crop = center_crop
-
+        self.odds = flip_p
+        self.size = size
+                     
         if per_image_tokens:
             assert self.num_images < len(per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
 
         if set == "train":
             self._length = self.num_images * repeats
 
-        self.size = size
-        self.inter = {'bilinear': Resampling.BILINEAR,
-                              'bicubic': Resampling.BICUBIC,
-                              'nearest': Resampling.NEAREST,
-                              'lanczos': Resampling.LANCZOS
-                              }[resampler]
-        self.odds = flip_p
+        self.interp = {
+            'bilinear': Resampling.BILINEAR,
+            'bicubic': Resampling.BICUBIC,
+            'nearest': Resampling.NEAREST,
+            'lanczos': Resampling.LANCZOS
+        }[resampler]
 
         self.augment = {
             'direction': {
@@ -107,25 +104,26 @@ class PersonalizedBase(Dataset):
             },
         }
 
+
     def __len__(self):
         return self._length
 
 
     def chance(self):
-        return randrange(0.0, 1.0, step=0.01)
+        return f"{random():.2f}"
 
 
     def __getitem__(self, i):
         example = {}
         im_path = self.image_paths[i % self.num_images]
         image = Image.open(im_path, 'r')
-
-        image = image.mode('RGB')
+        if image.mode != 'RGB':
+            image = image.mode('RGB')
 
         if self.per_image_tokens and np.random.uniform() < 0.25:
-            text = random.choice(imagenet_dual_templates_small).format(self.placeholder_token, per_img_token_list[i % self.num_images])
+            text = choice(imagenet_dual_templates_small).format(self.placeholder_token, per_img_token_list[i % self.num_images])
         else:
-            text = random.choice(imagenet_templates_small).format(self.placeholder_token)
+            text = choice(imagenet_templates_small).format(self.placeholder_token)
         example["caption"] = text
         
         if self.center_crop and image.width != image.height:
@@ -136,17 +134,16 @@ class PersonalizedBase(Dataset):
             image = Image.fromarray(img)
 
         if image.width > self.size or image.height > self.size:
-            image = image.resize((self.size, self.size), resample=self.inter, reducing_gap=3)
+            image = image.resize((self.size, self.size), resample=self.interp, reducing_gap=3)
 
         if self.chance() >= self.odds:
             direction = choice(['h_flip', 'v_flip', '90_degree', '180_degree', '270_degree'])
-            image = image.transpose(self.augment['direction'][direction]
+            image = image.transpose(self.augment['direction'][direction])
 
         if self.chance() >= self.odds:
             clarity = choice(['sharpen', 'blur'])
             image = sharpen(image).enhance(self.augment['clarity'][clarity]) 
             
         image = np.array(image).astype(np.uint8)
-        
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)        
         return example
