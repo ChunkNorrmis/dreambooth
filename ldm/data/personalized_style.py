@@ -5,8 +5,7 @@ from PIL.ImageEnhance import Sharpness as sharpen
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-
-import random
+from random import randint, choice, randrange
 
 imagenet_templates_small = [
     'a painting in the style of {}',
@@ -59,7 +58,7 @@ class PersonalizedBase(Dataset):
                  data_root,
                  size,
                  repeats,
-                 resampler='lanczos',
+                 resampler='bicubic',
                  flip_p=0.5,
                  set="train",
                  placeholder_token=None,
@@ -92,10 +91,29 @@ class PersonalizedBase(Dataset):
                               'nearest': Resampling.NEAREST,
                               'lanczos': Resampling.LANCZOS
                               }[resampler]
-        self.aug = flip_p * 10
+        self.odds = flip_p
+
+        self.augment = {
+            'direction': {
+                'h_flip': Transpose.FLIP_LEFT_RIGHT,
+                'v_flip': Transpose.FLIP_TOP_BOTTOM,
+                '90_degree': Transpose.ROTATE_90,
+                '180_degree': Transpose.ROTATE_180,
+                '270_degree': Transpose.ROTATE_270
+            },
+            'clarity': {
+                'sharpen': 1.5,
+                'blur': 0.0
+            },
+        }
 
     def __len__(self):
         return self._length
+
+
+    def chance(self):
+        return randrange(0.0, 1.0, step=0.01)
+
 
     def __getitem__(self, i):
         example = {}
