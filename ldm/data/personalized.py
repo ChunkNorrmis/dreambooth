@@ -63,7 +63,7 @@ class PersonalizedBase(Dataset):
             self.reg_tokens = OrderedDict([('C', self.coarse_class_text)])
 
         self.augment = {
-            direction: {
+            'direction': {
                 'h_flip': Transpose.FLIP_LEFT_RIGHT,
                 'v_flip': Transpose.FLIP_TOP_BOTTOM,
                 '90_degree': Transpose.ROTATE_90,
@@ -81,7 +81,7 @@ class PersonalizedBase(Dataset):
 
 
     def chance(self):
-        return random.randrange(0, 1, step=0.01)
+        return random.randrange(0.0, 1.0, step=0.01)
 
 
     def __getitem__(self, i):
