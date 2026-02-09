@@ -54,18 +54,19 @@ per_img_token_list = [
 ]
 
 class PersonalizedBase(Dataset):
-    def __init__(self,
-                 data_root,
-                 size=512,
-                 repeats=100,
-                 resampler='bicubic',
-                 flip_p=0.50,
-                 set="train",
-                 placeholder_token=None,
-                 per_image_tokens=False,
-                 center_crop=False,
-                 ):
-
+    def __init__(
+        self,
+        data_root,
+        size=512,
+        repeats=100,
+        resampler='bicubic',
+        flip_p=0.50,
+        set="train",
+        placeholder_token=None,
+        per_image_tokens=False,
+        center_crop=False,
+    ):
+        super().__init__()
         self.data_root = data_root
         self.image_paths = [os.path.join(self.data_root, file_path) for file_path in os.listdir(self.data_root)]
         # self._length = len(self.image_paths)
