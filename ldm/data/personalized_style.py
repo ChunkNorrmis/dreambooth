@@ -110,28 +110,24 @@ class PersonalizedBase(Dataset):
             text = random.choice(imagenet_templates_small).format(self.placeholder_token)
         example["caption"] = text
         
-        image = np.array(image).astype(np.uint8)
-        
-        if self.center_crop and image.shape[0] != image.shape[1]:
-            H, W = image.shape[0], image.shape[1]
+        if self.center_crop and image.width != image.height:
+            img = np.array(image).astype(np.uint8)
+            H, W = img.shape[0], img.shape[1]
             _max = min(H, W)
-            image = image[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
+            img = img[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
+            image = Image.fromarray(img)
 
-        image = Image.fromarray(image)
-
-        if self.size is not None and image.width > self.size:
+        if image.width > self.size or image.height > self.size:
             image = image.resize((self.size, self.size), resample=self.inter, reducing_gap=3)
-                
-        if randint(0, 9) >= self.aug:
-            fl = {0: Transpose.FLIP_LEFT_RIGHT, 1: Transpose.TOP_TO_BOTTOM}
-            image = image.transpose(method=fl[choice([0, 1])])
-                        
-        if randint(0, 9) >= self.aug:
-            image = image.sharpen(image).enhance(choice([1.40, 0.65]))
+
+        if self.chance() >= self.odds:
+            direction = choice(['h_flip', 'v_flip', '90_degree', '180_degree', '270_degree'])
+            image = image.transpose(self.augment['direction'][direction]
+
+        if self.chance() >= self.odds:
+            clarity = choice(['sharpen', 'blur'])
+            image = sharpen(image).enhance(self.augment['clarity'][clarity]) 
             
-        if randint(0, 9) >= self.aug:
-            image = image.rotate(angle=float(randint(0, 45)), resampling=self.inter)
-        
         image = np.array(image).astype(np.uint8)
         
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)        
