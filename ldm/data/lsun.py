@@ -7,34 +7,43 @@ from torchvision import transforms
 
 
 class LSUNBase(Dataset):
-    def __init__(self,
-                 txt_file,
-                 data_root,
-                 size=None,
-                 interpolation="bicubic",
-                 flip_p=0.5
-                 ):
+    def __init__(
+        self,
+        txt_file,
+        data_root,
+        size=None,
+        interpolation="bicubic",
+        flip_p=0.5
+    ):
+        super().__init__()
         self.data_paths = txt_file
         self.data_root = data_root
         with open(self.data_paths, "r") as f:
             self.image_paths = f.read().splitlines()
         self._length = len(self.image_paths)
+        self.size = size
+        self.odds = flip_p        
+        
         self.labels = {
             "relative_file_path_": [l for l in self.image_paths],
             "file_path_": [os.path.join(self.data_root, l)
                            for l in self.image_paths],
         }
 
-        self.size = size
         self.interpolation = {"linear": PIL.Image.LINEAR,
                               "bilinear": PIL.Image.BILINEAR,
                               "bicubic": PIL.Image.BICUBIC,
                               "lanczos": PIL.Image.LANCZOS,
                               }[interpolation]
-        self.flip = transforms.RandomHorizontalFlip(p=flip_p)
 
+    
     def __len__(self):
         return self._length
+
+
+    def chance(self):
+        return f"{random():.2f}"
+
 
     def __getitem__(self, i):
         example = dict((k, self.labels[k][i]) for k in self.labels)
@@ -42,18 +51,24 @@ class LSUNBase(Dataset):
         if not image.mode == "RGB":
             image = image.convert("RGB")
 
-        # default to score-sde preprocessing
-        img = np.array(image).astype(np.uint8)
-        crop = min(img.shape[0], img.shape[1])
-        h, w, = img.shape[0], img.shape[1]
-        img = img[(h - crop) // 2:(h + crop) // 2,
-              (w - crop) // 2:(w + crop) // 2]
+        if self.center_crop and image.width != image.height:
+            img = np.array(image).astype(np.uint8)
+            H, W = img.shape[0], img.shape[1]
+            _max = min(H, W)
+            img = img[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
+            image = Image.fromarray(img)
 
-        image = Image.fromarray(img)
-        if self.size is not None:
-            image = image.resize((self.size, self.size), resample=self.interpolation)
+        if image.width > self.size or image.height > self.size:
+            image = image.resize((self.size, self.size), resample=self.inter, reducing_gap=3)
 
-        image = self.flip(image)
+        if self.chance() >= self.odds:
+            direction = choice(['h_flip', 'v_flip', '90_degree', '180_degree', '270_degree'])
+            image = image.transpose(self.augment['direction'][direction])
+                
+        if self.chance() >= self.odds:
+            clarity = choice(['sharpen', 'blur'])
+            image = sharpen(image).enhance(self.augment['clarity'][clarity])
+
         image = np.array(image).astype(np.uint8)
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         return example
