@@ -3,6 +3,7 @@ from typing import OrderedDict
 import numpy as np
 import PIL
 from PIL import Image
+from PIL.ImageEnhance import Sharpness as sharpen
 from torch.utils.data import Dataset
 from torchvision import transforms
 from captionizer import caption_from_path, generic_captions_from_path
@@ -43,10 +44,12 @@ class PersonalizedBase(Dataset):
         if per_image_tokens:
             assert self.num_images < len(
                 per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
-
+        
         if set == "train":
             self._length = self.num_images * repeats
-        self.aug = flip_p * 100
+            self.aug = flip_p * 100
+        else:
+            self.aug = 
         self.size = size
         self.inter = {'bilinear': Resampling.BILINEAR,
                               'bicubic': Resampling.BICUBIC,
@@ -86,19 +89,14 @@ class PersonalizedBase(Dataset):
         if self.size is not None and image.width > self.size:
             image = image.resize((self.size, self.size), resample=self.inter, reducing_gap=3)
         
-        if randint(0, 99) < self.aug:
-            if randint(0, 99) < 50:
-                image = image.transpose(method=Transpose.FLIP_LEFT_RIGHT),
-            elif randint(0, 99) >= 50:
-                image = image.transpose(method=Transpose.TOP_TO_BOTTOM),            
-        
-        if randint(0, 99) < self.aug:
-            if randint(0, 99) < 50:
-                image = image.sharpen(image).enhance(1.4)
-            elif randint(0, 99) >= 50:
-                image = image.sharpen(image).enhance(0.65)
-        
-        if randint(0, 99) < self.aug:
+        if randint(0, 9) >= self.aug:
+            fl = {0: Transpose.FLIP_LEFT_RIGHT, 1: Transpose.TOP_TO_BOTTOM}
+            image = image.transpose(method=fl[choice([0, 1])])
+                        
+        if randint(0, 9) >= self.aug:
+            image = image.sharpen(image).enhance(choice([1.40, 0.65]))
+            
+        if randint(0, 9) >= self.aug:
             image = image.rotate(angle=float(randint(0, 45)), resampling=self.inter)
         
         image = np.array(image).astype(np.uint8)
