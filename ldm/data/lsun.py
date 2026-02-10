@@ -27,7 +27,7 @@ class LSUNBase(Dataset):
             "file_path_": [os.path.join(self.data_root, l)
                            for l in self.image_paths],
         }
-
+        self.odds = flip_p
         self.size = size
         self.interp = {
             'linear': PIL.Image.LINEAR,
