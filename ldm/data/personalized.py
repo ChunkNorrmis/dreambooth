@@ -3,12 +3,13 @@ from typing import OrderedDict
 import numpy as np
 import PIL
 from PIL import Image
-from PIL.ImageEnhance import Sharpness as sharpen
 from torch.utils.data import Dataset
 from torchvision import transforms
 from captionizer import caption_from_path, generic_captions_from_path
 from captionizer import find_images
 from random import choice, random
+from PIL.ImageEnhance import Sharpness as sharpen
+
 
 
 per_img_token_list = [
@@ -16,48 +17,54 @@ per_img_token_list = [
 ]
 
 class PersonalizedBase(Dataset):
-    def __init__(
-        self,
-        data_root,
-        size=512,
-        repeats=100,
-        resampler='bicubic',
-        set='train',
-        placeholder_token=None,
-        per_image_tokens=False,
-        center_crop=True,
-        flip_p=0.50,
-        mixing_prob=0.25,
-        coarse_class_text=None,
-        token_only=False,
-        reg=False                 
-    ):
-        super().__init__()
+    def __init__(self,
+                 data_root,
+                 size=None,
+                 repeats=100,
+                 interpolation="lanczos",
+                 flip_p=0.5,
+                 set="train",
+                 placeholder_token="dog",
+                 per_image_tokens=False,
+                 center_crop=False,
+                 mixing_prob=0.25,
+                 coarse_class_text=None,
+                 token_only=False,
+                 reg=False
+                 ):
+
         self.data_root = data_root
+
         self.image_paths = find_images(self.data_root)
+
+        # self._length = len(self.image_paths)
         self.num_images = len(self.image_paths)
         self._length = self.num_images
+
         self.placeholder_token = placeholder_token
         self.token_only = token_only
         self.per_image_tokens = per_image_tokens
         self.center_crop = center_crop
         self.mixing_prob = mixing_prob
-        self.coarse_class_text = coarse_class_text
         self.odds = flip_p
-        self.size = size
+
+        self.coarse_class_text = coarse_class_text
 
         if per_image_tokens:
-            assert self.num_images < len(per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
+            assert self.num_images < len(
+                per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
 
         if set == "train":
             self._length = self.num_images * repeats
 
+        self.size = size
+        self.reg = reg
         self.interp = {
             'bilinear': Resampling.BILINEAR,
             'bicubic': Resampling.BICUBIC,
             'nearest': Resampling.NEAREST,
             'lanczos': Resampling.LANCZOS
-        }[resampler]
+        }[interpolation]
 
         self.augment = {
             'direction': {
@@ -88,9 +95,10 @@ class PersonalizedBase(Dataset):
     def __getitem__(self, i):
         example = {}
         image_path = self.image_paths[i % self.num_images]
-        image = Image.open(image_path, 'r')
-        if image.mode != 'RGB':
-            image = image.mode('RGB')
+        image = Image.open(image_path)
+
+        if not image.mode == "RGB":
+            image = image.convert("RGB")
 
         example["caption"] = ""
         if self.reg and self.coarse_class_text:
@@ -119,4 +127,3 @@ class PersonalizedBase(Dataset):
         image = np.array(image).astype(np.uint8)
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         return example
-
