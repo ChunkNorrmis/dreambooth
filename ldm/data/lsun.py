@@ -34,7 +34,7 @@ class LSUNBase(Dataset):
             "bilinear": PIL.Image.BILINEAR,
             "bicubic": PIL.Image.BICUBIC,
             "lanczos": PIL.Image.LANCZOS,
-        }[resampler]
+        }[interpolation]
 
         self.augment = {
             'direction': {
