@@ -14,7 +14,6 @@ class JoePennaDreamboothConfigSchemaV1():
     def __init__(
         self,
         project_name,
-        save_every_x_steps,
         training_images_folder_path,
         regularization_images_folder_path,
         token,
@@ -22,14 +21,8 @@ class JoePennaDreamboothConfigSchemaV1():
         flip_percent,
         learning_rate,
         model_path, 
-        config_date_time,
         seed,
-        debug,
-        gpu,
-        model_repo_id,
         token_only,
-        run_seed_everything,
-        project_config_filename,
         batch_size,
         epochs,
         regularization_iterations,
@@ -38,7 +31,13 @@ class JoePennaDreamboothConfigSchemaV1():
         resampler,
         accumulated_gradients,
         center_crop,
-        schema = 1
+        save_every_x_steps=500,
+        config_date_time=None,
+        gpu=0,
+        model_repo_id=None,
+        run_seed_everything=True,
+        debug=False,
+        schema=1
     ):
         super().__init__()
         self.schema = schema
@@ -70,8 +69,9 @@ class JoePennaDreamboothConfigSchemaV1():
         if run_seed_everything:
             seed_everything(self.seed)
 
-        if self.save_every_x_steps < 0:
-            raise Exception("--save_every_x_steps: must be greater than or equal to 0")
+        if self.save_every_x_steps <= 0:
+            self.save_every_x_steps = 0
+            #raise Exception("--save_every_x_steps: must be greater than or equal to 0")
         self.training_images_folder_path = os.path.relpath(training_images_folder_path)
         
         if not os.path.exists(self.training_images_folder_path):
