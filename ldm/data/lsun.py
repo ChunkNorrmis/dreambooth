@@ -2,7 +2,7 @@ import os
 import numpy as np
 import PIL
 from PIL import Image
-from PIL.ImageEnhance import Sharpness as sharpen
+from PIL.ImageEnhance import Sharpness
 from torch.utils.data import Dataset
 from torchvision import transforms
 from random import random, choice
@@ -15,7 +15,8 @@ class LSUNBase(Dataset):
                  data_root,
                  size=None,
                  interpolation="lanczos",
-                 flip_p=0.5
+                 flip_p=0.5,
+                 center_crop=True
                  ):
         self.data_paths = txt_file
         self.data_root = data_root
@@ -81,10 +82,10 @@ class LSUNBase(Dataset):
                 
         if self.chance() >= self.odds:
             clarity = choice(['sharpen', 'blur'])
-            image = sharpen(image).enhance(self.augment['clarity'][clarity])
+            image = sharpness(image).enhance(self.augment['clarity'][clarity])
 
-        image = np.array(image).astype(np.uint8)
-        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
+        img = np.array(image).astype(np.uint8)
+        example["image"] = (img / 127.5 - 1.0).astype(np.float32)
         return example
 
 
