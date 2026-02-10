@@ -100,8 +100,8 @@ class PersonalizedBase(Dataset):
                 '270_degree': Transpose.ROTATE_270
             },
             'clarity': {
-                'sharpen': 1.5,
-                'blur': 0.0
+                'sharpen': random() + 1.0,
+                'blur': random() - 1.0
             },
         }
 
