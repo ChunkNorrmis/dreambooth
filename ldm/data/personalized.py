@@ -21,7 +21,7 @@ class PersonalizedBase(Dataset):
         data_root,
         size=512,
         repeats=100,
-        resampler='bucubic',
+        resampler='bicubic',
         set='train',
         placeholder_token=None,
         per_image_tokens=False,
