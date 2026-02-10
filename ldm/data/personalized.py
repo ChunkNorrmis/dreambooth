@@ -8,7 +8,7 @@ from torchvision import transforms
 from captionizer import caption_from_path, generic_captions_from_path
 from captionizer import find_images
 from random import choice, random
-from PIL.ImageEnhance import Sharpness as sharpen
+from PIL.ImageEnhance import Sharpness
 
 
 
@@ -122,7 +122,7 @@ class PersonalizedBase(Dataset):
                 
         if self.chance() >= self.odds:
             clarity = choice(['sharpen', 'blur'])
-            image = sharpen(image).enhance(self.augment['clarity'][clarity])
+            image = sharpness(image).enhance(self.augment['clarity'][clarity])
 
         img = np.array(image).astype(np.uint8)
         example["image"] = (img / 127.5 - 1.0).astype(np.float32)
