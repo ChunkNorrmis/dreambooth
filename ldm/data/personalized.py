@@ -21,12 +21,12 @@ class PersonalizedBase(Dataset):
                  data_root,
                  size=None,
                  repeats=100,
-                 interpolation="lanczos",
+                 interpolation="bicubic",
                  flip_p=0.5,
                  set="train",
                  placeholder_token="dog",
                  per_image_tokens=False,
-                 center_crop=False,
+                 center_crop=True,
                  mixing_prob=0.25,
                  coarse_class_text=None,
                  token_only=False,
@@ -124,6 +124,6 @@ class PersonalizedBase(Dataset):
             clarity = choice(['sharpen', 'blur'])
             image = sharpen(image).enhance(self.augment['clarity'][clarity])
 
-        image = np.array(image).astype(np.uint8)
-        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
+        img = np.array(image).astype(np.uint8)
+        example["image"] = (img / 127.5 - 1.0).astype(np.float32)
         return example
