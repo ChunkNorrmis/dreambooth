@@ -1,8 +1,7 @@
 import os
 import numpy as np
-import PIL
-from PIL.ImageEnhance import Sharpness as sharpen
 from PIL import Image
+from PIL.ImageEnhance import Sharpness
 from torch.utils.data import Dataset
 from torchvision import transforms
 from random import random, choice
@@ -60,12 +59,12 @@ class PersonalizedBase(Dataset):
                  data_root,
                  size=None,
                  repeats=100,
-                 interpolation="lanczos",
+                 interpolation="bicubic",
                  flip_p=0.5,
                  set="train",
                  placeholder_token="*",
                  per_image_tokens=False,
-                 center_crop=False,
+                 center_crop=True,
                  ):
 
         self.data_root = data_root
@@ -149,8 +148,8 @@ class PersonalizedBase(Dataset):
 
         if self.chance() >= self.odds:
             clarity = choice(['sharpen', 'blur'])
-            image = sharpen(image).enhance(self.augment['clarity'][clarity]) 
+            image = Sharpness(image).enhance(self.augment['clarity'][clarity]) 
             
-        image = np.array(image).astype(np.uint8)
-        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
+        img = np.array(image).astype(np.uint8)
+        example["image"] = (img / 127.5 - 1.0).astype(np.float32)
         return example
