@@ -60,7 +60,7 @@ class PersonalizedBase(Dataset):
                  data_root,
                  size=None,
                  repeats=100,
-                 interpolation="bicubic",
+                 interpolation="lanczos",
                  flip_p=0.5,
                  set="train",
                  placeholder_token="*",
