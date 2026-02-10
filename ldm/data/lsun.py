@@ -30,11 +30,26 @@ class LSUNBase(Dataset):
                            for l in self.image_paths],
         }
 
-        self.interpolation = {"linear": PIL.Image.LINEAR,
-                              "bilinear": PIL.Image.BILINEAR,
-                              "bicubic": PIL.Image.BICUBIC,
-                              "lanczos": PIL.Image.LANCZOS,
-                              }[interpolation]
+        self.interp = {
+            'linear': PIL.Image.LINEAR,
+            "bilinear": PIL.Image.BILINEAR,
+            "bicubic": PIL.Image.BICUBIC,
+            "lanczos": PIL.Image.LANCZOS,
+        }[resampler]
+
+        self.augment = {
+            'direction': {
+                'h_flip': Transpose.FLIP_LEFT_RIGHT,
+                'v_flip': Transpose.FLIP_TOP_BOTTOM,
+                '90_degree': Transpose.ROTATE_90,
+                '180_degree': Transpose.ROTATE_180,
+                '270_degree': Transpose.ROTATE_270
+            },
+            'clarity': {
+                'sharpen': random() + 1.0,
+                'blur': random() - 1.0
+            },
+        }
 
     
     def __len__(self):
@@ -59,7 +74,7 @@ class LSUNBase(Dataset):
             image = Image.fromarray(img)
 
         if image.width > self.size or image.height > self.size:
-            image = image.resize((self.size, self.size), resample=self.inter, reducing_gap=3)
+            image = image.resize((self.size, self.size), resample=self.interp, reducing_gap=3)
 
         if self.chance() >= self.odds:
             direction = choice(['h_flip', 'v_flip', '90_degree', '180_degree', '270_degree'])
