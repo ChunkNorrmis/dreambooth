@@ -68,11 +68,11 @@ class PersonalizedBase(Dataset):
 
         self.augment = {
             'direction': {
-                'h_flip': Transpose.FLIP_LEFT_RIGHT,
-                'v_flip': Transpose.FLIP_TOP_BOTTOM,
-                '90_degree': Transpose.ROTATE_90,
-                '180_degree': Transpose.ROTATE_180,
-                '270_degree': Transpose.ROTATE_270
+                'h_flip': 0,
+                'v_flip': 1,
+                '90_degree': 2,
+                '180_degree': 3,
+                '270_degree': 4
             },
             'clarity': {
                 'sharpen': random() + 1.0,
