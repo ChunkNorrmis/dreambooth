@@ -146,7 +146,7 @@ opt, unknown = parser.parse_known_args()
 config = JoePennaDreamboothConfigSchemaV1()
 
 if opt.config_file_path is not None:
-    config_file_path=opt.config_file_path)
+    config_file_path=opt.config_file_path
     if not os.path.exists(config_file_path):
         print(f"{config_file_path} not found.", file=sys.stderr)
         return None
