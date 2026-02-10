@@ -1,3 +1,8 @@
+--extra-index-url https://download.pytorch.org/whl/121
+torch==2.3.1
+torchvision
+huggingface_hub
+hf_transfer
 numpy==1.23.1
 pytorch-lightning==1.7.6
 csv-logger
