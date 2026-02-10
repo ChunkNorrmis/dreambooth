@@ -56,7 +56,7 @@ class LSUNBase(Dataset):
 
 
     def chance(self):
-        return f"{random():.2f}"    
+        return random()
 
     
     def __getitem__(self, i):
