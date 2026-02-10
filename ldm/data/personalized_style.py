@@ -90,10 +90,10 @@ class PersonalizedBase(Dataset):
         self.size = size
         self.odds = flip_p
         self.interp = {
-            'bilinear': Resampling.BILINEAR,
-            'bicubic': Resampling.BICUBIC,
-            'nearest': Resampling.NEAREST,
-            'lanczos': Resampling.LANCZOS
+            'bilinear': PIL.Image.BILINEAR,
+            'bicubic': PIL.Image.BICUBIC,
+            'nearest': PIL.Image.NEAREST,
+            'lanczos': PIL.Image.LANCZOS
         }[interpolation]
 
         self.augment = {
