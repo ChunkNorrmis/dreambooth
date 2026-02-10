@@ -14,7 +14,7 @@ class LSUNBase(Dataset):
                  txt_file,
                  data_root,
                  size=None,
-                 interpolation="bicubic",
+                 interpolation="lanczos",
                  flip_p=0.5
                  ):
         self.data_paths = txt_file
