@@ -106,7 +106,7 @@ class PersonalizedBase(Dataset):
             image = Image.fromarray(img)
 
         if image.width > self.size or image.height > self.size:
-            image = image.resize((self.size, self.size), resample=self.inter, reducing_gap=3)
+            image = image.resize((self.size, self.size), resample=self.interp, reducing_gap=3)
 
         if self.chance() >= self.odds:
             direction = choice(['h_flip', 'v_flip', '90_degree', '180_degree', '270_degree'])
