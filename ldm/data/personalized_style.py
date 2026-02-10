@@ -69,7 +69,6 @@ class PersonalizedBase(Dataset):
         super().__init__()
         self.data_root = data_root
         self.image_paths = [os.path.join(self.data_root, file_path) for file_path in os.listdir(self.data_root)]
-        # self._length = len(self.image_paths)
         self.num_images = len(self.image_paths)
         self._length = self.num_images 
         self.placeholder_token = placeholder_token
