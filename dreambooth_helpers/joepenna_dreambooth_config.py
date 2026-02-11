@@ -42,6 +42,7 @@ class JoePennaDreamboothConfigSchemaV1:
         self.learning_rate: float = 1.0e-06
         self.repeats = ''
         self.batch_size = 1
+        self.accum_grads = 1
         # Model Info
         self.model_repo_id: str = ''
         self.model_path: str = ''
@@ -60,6 +61,7 @@ class JoePennaDreamboothConfigSchemaV1:
             model_path: str,
             repeats,
             batch_size,
+            accum_grads,
             config_date_time: str = None,
             seed: int = 1337,
             debug: bool = False,
