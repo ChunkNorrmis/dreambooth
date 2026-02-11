@@ -67,7 +67,7 @@ class PersonalizedBase(Dataset):
                  ):
 
         self.data_root = data_root
-
+        self.flip_p = flip_p
         self.image_paths = [os.path.join(self.data_root, file_path) for file_path in os.listdir(self.data_root)]
 
         # self._length = len(self.image_paths)
