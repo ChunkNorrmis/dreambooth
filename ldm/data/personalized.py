@@ -101,7 +101,7 @@ class PersonalizedBase(Dataset):
             image = image.resize((self.size, self.size),
                                  resample=self.interpolation)
 
-        if random.random() > self.flip_p
+        if random.random() > self.flip_p:
             image = self.transform(image)
 
         image = np.array(image).astype(np.uint8)
