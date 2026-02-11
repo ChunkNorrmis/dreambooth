@@ -31,7 +31,7 @@ class PersonalizedBase(Dataset):
                  ):
 
         self.data_root = data_root
-
+        self.flip_p = flip_p
         self.image_paths = find_images(self.data_root)
 
         # self._length = len(self.image_paths)
@@ -61,8 +61,9 @@ class PersonalizedBase(Dataset):
                               }[interpolation]
         
         self.transform = transforms.RandomChoice([
-            transforms.RandomHorizontalFlip(p=flip_p),
-            transforms.RandomPerspective(distortion_scale=0.5, p=flip_p ,interpolation=2, fill=0)
+            transforms.RandomHorizontalFlip(p=self.flip_p),
+            transforms.RandomPerspective(distortion_scale=0.5, p=self.flip_p ,interpolation=2, fill=0),
+            transforms.RandomRotation(90, interpolation=2, expand=True, center=None, fill=None)
         ])
                      
         self.reg = reg
@@ -100,7 +101,8 @@ class PersonalizedBase(Dataset):
             image = image.resize((self.size, self.size),
                                  resample=self.interpolation)
 
-        image = self.transform(image)
+        if random.random() > self.flip_p
+            image = self.transform(image)
 
         image = np.array(image).astype(np.uint8)
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
