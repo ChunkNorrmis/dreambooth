@@ -166,7 +166,7 @@ def get_dreambooth_data_config(config: JoePennaDreamboothConfigSchemaV1) -> dict
     reg_block = {
         "target": "ldm.data.personalized.PersonalizedBase",
         "params": {
-            "size": 512,
+            "size": config.res,
             "set": "train",
             "reg": True,
             "per_image_tokens": False,
@@ -186,7 +186,7 @@ def get_dreambooth_data_config(config: JoePennaDreamboothConfigSchemaV1) -> dict
             "train": {
                 "target": "ldm.data.personalized.PersonalizedBase",
                 "params": {
-                    "size": 512,
+                    "size": config.res,
                     "set": "train",
                     "per_image_tokens": False,
                     "repeats": config.repeats,
@@ -201,7 +201,7 @@ def get_dreambooth_data_config(config: JoePennaDreamboothConfigSchemaV1) -> dict
             "validation": {
                 "target": "ldm.data.personalized.PersonalizedBase",
                 "params": {
-                    "size": 512,
+                    "size": config.res,
                     "set": "val",
                     "per_image_tokens": False,
                     "repeats": 10,
