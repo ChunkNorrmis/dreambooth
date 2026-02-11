@@ -137,6 +137,19 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             default=100,
             required=True
         )
+        parser.add_argument(
+            "--batch_size",
+            type=int,
+            default=1,
+            required=False
+        )
+        parser.add_argument(
+            "--accum_grads",
+            type=int,
+            default=1,
+            required=False
+        )
+        
 
         return parser
 
@@ -164,7 +177,9 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             learning_rate=opt.learning_rate,
             model_repo_id='',
             model_path=opt.training_model,
-            repeats=opt.repeats
+            repeats=opt.repeats,
+            batch_size=opt.batch_size,
+            accum_grads=opt.accum_grads            
         )
 
     return config
