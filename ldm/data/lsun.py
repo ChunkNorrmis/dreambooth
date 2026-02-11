@@ -15,7 +15,6 @@ class LSUNBase(Dataset):
                  interpolation="bicubic",
                  flip_p=0.5
                  ):
-        self.flip_p = flip_p
         self.data_paths = txt_file
         self.data_root = data_root
         with open(self.data_paths, "r") as f:
@@ -35,8 +34,8 @@ class LSUNBase(Dataset):
                               }[interpolation]
 
         self.transform = transforms.RandomChoice([
-            transforms.RandomHorizontalFlip(p=1.0),
-            transforms.RandomPerspective(distortion_scale=0.5, p=1.0, interpolation=2, fill=0)
+            transforms.RandomHorizontalFlip(p=flip_p),
+            transforms.RandomPerspective(distortion_scale=0.5, p=flip_p, interpolation=2, fill=0)
         ])
 
 
@@ -60,8 +59,7 @@ class LSUNBase(Dataset):
         if self.size is not None:
             image = image.resize((self.size, self.size), resample=self.interpolation)
 
-        if random.random() > self.flip_p:
-            image = self.transform(image)
+        image = self.transform(image)
 
         image = np.array(image).astype(np.uint8)
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
