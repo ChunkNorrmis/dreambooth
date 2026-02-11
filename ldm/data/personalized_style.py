@@ -2,9 +2,9 @@ import os
 import numpy as np
 import PIL
 from PIL import Image
+from PIL.ImageEnhance import Sharpness as Sharpen
 from torch.utils.data import Dataset
 from torchvision import transforms
-
 import random
 
 imagenet_templates_small = [
@@ -65,7 +65,6 @@ class PersonalizedBase(Dataset):
                  per_image_tokens=False,
                  center_crop=False,
                  ):
-
         self.data_root = data_root
         self.image_paths = [os.path.join(self.data_root, file_path) for file_path in os.listdir(self.data_root)]
 
@@ -91,12 +90,18 @@ class PersonalizedBase(Dataset):
                               "lanczos": PIL.Image.LANCZOS,
                               }[interpolation]
 
-        self.transform = transforms.RandomChoice([
+        self.aug = choice([
             transforms.RandomHorizontalFlip(p=flip_p),
-            transforms.RandomPerspective(distortion_scale=0.5, p=flip_p, interpolation=2, fill=0)
+            transforms.RandomPerspective(distortion_scale=0.5, p=flip_p ,interpolation=2, fill=0),
+            self.rshn(image, p=flip_p)
         ])
-
-
+                     
+                                                                                                                                                                                                                                                                        
+    def rshn(self, image, p=None):
+        if random.random() <= p:
+            sharpness = random.choice([random.random() - 1.0, random.random() + 1.0])
+            return Sharpen(image).enhance(sharpness)
+    
     def __len__(self):
         return self._length
 
@@ -127,7 +132,7 @@ class PersonalizedBase(Dataset):
         if self.size is not None:
             image = image.resize((self.size, self.size), resample=self.interpolation)
 
-        image = self.transform(image)
+        image = self.aug(image)
 
         image = np.array(image).astype(np.uint8)
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
