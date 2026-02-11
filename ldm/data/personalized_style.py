@@ -93,7 +93,7 @@ class PersonalizedBase(Dataset):
         self.aug = choice([
             transforms.RandomHorizontalFlip(p=flip_p),
             transforms.RandomPerspective(distortion_scale=0.5, p=flip_p ,interpolation=2, fill=0),
-            self.rshn(image, p=flip_p)
+            self.rshn(p=flip_p)
         ])
                      
                                                                                                                                                                                                                                                                         
