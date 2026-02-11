@@ -166,16 +166,14 @@ def get_dreambooth_data_config(config: JoePennaDreamboothConfigSchemaV1) -> dict
     reg_block = {
         "target": "ldm.data.personalized.PersonalizedBase",
         "params": {
-            "size": config.resolution,
+            "size": 512,
             "set": "train",
             "reg": True,
             "per_image_tokens": False,
-            "repeats": config.regularization_iterations,
+            "repeats": 1,
             "data_root": config.regularization_images_folder_path,
             "coarse_class_text": config.class_word,
             "placeholder_token": config.token,
-            "center_crop": config.center_crop,
-            "resampler": config.resampler,
         }
     }
 
@@ -188,27 +186,25 @@ def get_dreambooth_data_config(config: JoePennaDreamboothConfigSchemaV1) -> dict
             "train": {
                 "target": "ldm.data.personalized.PersonalizedBase",
                 "params": {
-                    "size": config.resolution,
-                    "repeats": config.epochs,
+                    "size": 512,
                     "set": "train",
                     "per_image_tokens": False,
+                    "repeats": config.repeats,
                     "coarse_class_text": config.class_word,
                     "data_root": config.training_images_folder_path,
                     "placeholder_token": config.token,
-                    "token_only": config.token_only,
+                    "token_only": config.token_only or not config.class_word,
                     "flip_p": config.flip_percent,
-                    "center_crop": config.center_crop,
-                    "resampler": config.resampler,
                 }
             },
             "reg": reg_block if config.regularization_images_folder_path is not None and config.regularization_images_folder_path != '' else None,
             "validation": {
                 "target": "ldm.data.personalized.PersonalizedBase",
                 "params": {
-                    "size": config.resolution,
+                    "size": 512,
                     "set": "val",
                     "per_image_tokens": False,
-                    "repeats": config.validation_iterations,
+                    "repeats": 10,
                     "coarse_class_text": config.class_word,
                     "placeholder_token": config.token,
                     "data_root": config.training_images_folder_path,
@@ -243,7 +239,7 @@ def get_dreambooth_lightning_config(config: JoePennaDreamboothConfigSchemaV1) ->
             "accelerator": "gpu",
             "devices": f"{config.gpu},",
             "benchmark": True,
-            "accumulate_grad_batches": config.accumulated_gradients,
+            "accumulate_grad_batches": config.accum_grads,
             "max_steps": config.max_training_steps,
         }
     }
