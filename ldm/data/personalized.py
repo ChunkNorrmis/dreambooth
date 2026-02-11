@@ -63,7 +63,7 @@ class PersonalizedBase(Dataset):
         self.transform = transforms.RandomChoice([
             transforms.RandomHorizontalFlip(p=1.0),
             transforms.RandomPerspective(distortion_scale=0.5, p=1.0,interpolation=2, fill=0),
-            transforms.RandomRotation(90, resample=False, expand=False, center=None, fill=None)
+            transforms.RandomRotation(90, interpolation=InterpolationMode.BILINEAR, expand=True, center=None, fill=None)
         ])
                      
         self.reg = reg
