@@ -2,11 +2,8 @@ import os
 import numpy as np
 import PIL
 from PIL import Image
-from PIL.ImageEnhance import Sharpness
 from torch.utils.data import Dataset
 from torchvision import transforms
-from random import random, choice
-
 
 
 class LSUNBase(Dataset):
@@ -14,9 +11,8 @@ class LSUNBase(Dataset):
                  txt_file,
                  data_root,
                  size=None,
-                 interpolation="lanczos",
-                 flip_p=0.5,
-                 center_crop=True
+                 interpolation="bicubic",
+                 flip_p=0.5
                  ):
         self.data_paths = txt_file
         self.data_root = data_root
@@ -28,64 +24,46 @@ class LSUNBase(Dataset):
             "file_path_": [os.path.join(self.data_root, l)
                            for l in self.image_paths],
         }
-        self.odds = flip_p
+
         self.size = size
-        self.interp = {
-            'linear': PIL.Image.LINEAR,
-            "bilinear": PIL.Image.BILINEAR,
-            "bicubic": PIL.Image.BICUBIC,
-            "lanczos": PIL.Image.LANCZOS,
-        }[interpolation]
+        self.interpolation = {"linear": PIL.Image.LINEAR,
+                              "bilinear": PIL.Image.BILINEAR,
+                              "bicubic": PIL.Image.BICUBIC,
+                              "lanczos": PIL.Image.LANCZOS,
+                              }[interpolation]
 
-        self.augment = {
-            'direction': {
-                'h_flip': 0,
-                'v_flip': 1,
-                '90_degree': 2,
-                '180_degree': 3,
-                '270_degree': 4
-            },
-            'clarity': {
-                'sharpen': random() + 1.0,
-                'blur': random() - 1.0
-            },
-        }
+        self.transform = tranforms.RandomChoice([
+            transforms.RandomHorizontalFlip(p=1.0),
+            transforms.RandomPerspective(distortion_scale=0.5, p=1.0,interpolation=2, fill=0),
+            transforms.RandomRotation(90, resample=False, expand=False, center=None, fill=None)
+        ])
 
-    
+
     def __len__(self):
         return self._length
 
-
-    def chance(self):
-        return random()
-
-    
     def __getitem__(self, i):
         example = dict((k, self.labels[k][i]) for k in self.labels)
         image = Image.open(example["file_path_"])
         if not image.mode == "RGB":
             image = image.convert("RGB")
 
-        if self.center_crop and image.width != image.height:
-            img = np.array(image).astype(np.uint8)
-            H, W = img.shape[0], img.shape[1]
-            _max = min(H, W)
-            img = img[(H - _max) // 2:(H + _max) // 2, (W - _max) // 2:(W + _max) // 2]
-            image = Image.fromarray(img)
-
-        if image.width > self.size or image.height > self.size:
-            image = image.resize((self.size, self.size), resample=self.interp, reducing_gap=3)
-
-        if self.chance() >= self.odds:
-            direction = choice(['h_flip', 'v_flip', '90_degree', '180_degree', '270_degree'])
-            image = image.transpose(self.augment['direction'][direction])
-                
-        if self.chance() >= self.odds:
-            clarity = choice(['sharpen', 'blur'])
-            image = sharpness(image).enhance(self.augment['clarity'][clarity])
-
+        # default to score-sde preprocessing
         img = np.array(image).astype(np.uint8)
-        example["image"] = (img / 127.5 - 1.0).astype(np.float32)
+        crop = min(img.shape[0], img.shape[1])
+        h, w, = img.shape[0], img.shape[1]
+        img = img[(h - crop) // 2:(h + crop) // 2,
+              (w - crop) // 2:(w + crop) // 2]
+
+        image = Image.fromarray(img)
+        if self.size is not None:
+            image = image.resize((self.size, self.size), resample=self.interpolation)
+
+        if random.random() > self.flip_p:
+            image = self.transform(image)
+
+        image = np.array(image).astype(np.uint8)
+        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         return example
 
 
