@@ -40,6 +40,7 @@ class JoePennaDreamboothConfigSchemaV1:
         # Training Params
         self.flip_percent: float = 0.5
         self.learning_rate: float = 1.0e-06
+        self.res = 512
         self.repeats = ''
         self.batch_size = 1
         self.accum_grads = 1
@@ -62,6 +63,7 @@ class JoePennaDreamboothConfigSchemaV1:
             repeats,
             batch_size,
             accum_grads,
+            res,
             config_date_time: str = None,
             seed: int = 1337,
             debug: bool = False,
@@ -72,6 +74,8 @@ class JoePennaDreamboothConfigSchemaV1:
     ):
         self.repeats = repeats
         self.batch_size = batch_size
+        self.accum_grads = accum_grads
+        self.res = res
         
         self.project_name = project_name
         if self.project_name is None or self.project_name == '':
