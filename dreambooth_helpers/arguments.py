@@ -149,7 +149,12 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             default=1,
             required=False
         )
-        
+        parser.add_argument(
+            "--resolution",
+            type=int,
+            default=512,
+            required=False
+        )
 
         return parser
 
@@ -179,7 +184,8 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             model_path=opt.training_model,
             repeats=opt.repeats,
             batch_size=opt.batch_size,
-            accum_grads=opt.accum_grads            
+            accum_grads=opt.accum_grads,
+            res=opt.resolution
         )
 
     return config
