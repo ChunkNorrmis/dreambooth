@@ -61,8 +61,8 @@ class PersonalizedBase(Dataset):
                               }[interpolation]
         
         self.transform = transforms.RandomChoice([
-            transforms.RandomHorizontalFlip(p=self.flip_p),
-            transforms.RandomPerspective(distortion_scale=0.5, p=self.flip_p ,interpolation=2, fill=0),
+            transforms.RandomHorizontalFlip(p=1.0),
+            transforms.RandomPerspective(distortion_scale=0.5, p=1.0 ,interpolation=2, fill=0),
             transforms.RandomRotation(90, interpolation=2, expand=True, center=None, fill=None)
         ])
                      
