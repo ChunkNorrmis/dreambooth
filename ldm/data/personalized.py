@@ -4,7 +4,6 @@ import PIL
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-
 import random
 
 imagenet_templates_small = [
@@ -56,8 +55,8 @@ per_img_token_list = [
 class PersonalizedBase(Dataset):
     def __init__(self,
                  data_root,
-                 size=None,
-                 repeats=100,
+                 size,
+                 repeats,
                  interpolation="bicubic",
                  flip_p=0.5,
                  set="train",
@@ -93,8 +92,8 @@ class PersonalizedBase(Dataset):
                               }[interpolation]
         
         self.transform = tranforms.RandomChoice([
-            transforms.RandomHorizontalFlip(p=flip_p),
-            transforms.RandomPerspective(distortion_scale=0.5, p=flip_p,interpolation=2, fill=0),
+            transforms.RandomHorizontalFlip(p=1.0),
+            transforms.RandomPerspective(distortion_scale=0.5, p=1.0,interpolation=2, fill=0),
             transforms.RandomRotation(90, resample=False, expand=False, center=None, fill=None)
         ])
         
@@ -128,8 +127,10 @@ class PersonalizedBase(Dataset):
         image = Image.fromarray(img)
         if self.size is not None:
             image = image.resize((self.size, self.size), resample=self.interpolation)
-
-        image = self.transform(image)
+    
+        if random.random() > self.flip_p:
+            image = self.transform(image)
+        
         image = np.array(image).astype(np.uint8)
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         return example
