@@ -54,24 +54,24 @@ class PersonalizedBase(Dataset):
             self._length = self.num_images * repeats
 
         self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
-                              "bilinear": PIL.Image.BILINEAR,
-                              "bicubic": PIL.Image.BICUBIC,
-                              "lanczos": PIL.Image.LANCZOS,
+        self.interpolation = {"nearest": 0,
+                              "bilinear": 2,
+                              "bicubic": 3,
+                              "lanczos": 1,
                               }[interpolation]
 
         self.reg = reg
         if self.reg and self.coarse_class_text:
             self.reg_tokens = OrderedDict([('C', self.coarse_class_text)])
 
-        self.aug = choice([
+        self.aug = random.choice([
             transforms.RandomHorizontalFlip(p=flip_p),
-            transforms.RandomPerspective(distortion_scale=0.5, p=flip_p ,interpolation=2, fill=0),
-            self.rshn(p=flip_p)
+            transforms.RandomPerspective(distortion_scale=0.5, p=flip_p ,interpolation=self.interpolation, fill=0),
+            self.random_sharpen(p=flip_p)
         ])
                      
                                                                                                                                                                                                                                                                         
-    def rshn(self, image, p=None):
+    def random_sharpen(self, image=image, p=None):
         if random.random() <= p:
             sharpness = random.choice([random.random() - 1.0, random.random() + 1.0])
             return Sharpen(image).enhance(sharpness)
@@ -93,22 +93,23 @@ class PersonalizedBase(Dataset):
         else:
             example["caption"] = caption_from_path(image_path, self.data_root, self.coarse_class_text, self.placeholder_token)
 
-        # default to score-sde preprocessing
-        img = np.array(image).astype(np.uint8)
 
         if self.center_crop:
-            crop = min(img.shape[0], img.shape[1])
-            h, w, = img.shape[0], img.shape[1]
-            img = img[(h - crop) // 2:(h + crop) // 2,
-                      (w - crop) // 2:(w + crop) // 2]
+            img = np.zeros((image.height, image.width, 3), dtype=np.uint8)
+            img = np.asarray(image)
+            H, W = img.shape[0], img.shape[1]
+            crop = min(W, H)
+            img = img[(H - crop) // 2: (H + crop) // 2,
+                      (W - crop) // 2: (W + crop) // 2]
 
         image = Image.fromarray(img)
         if self.size is not None:
-            image = image.resize((self.size, self.size),
-                                 resample=self.interpolation)
-        
+            image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
         image = self.aug(image)
 
-        image = np.array(image).astype(np.uint8)
-        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
+        img = np.zeros((image.height, image.width, 3), dtype=np.uint8)
+        img = np.asarray(image)
+        img = (img / 127.5 - 1).astype(np.float32)
+        example['image'] = img
+        
         return example
