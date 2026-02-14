@@ -1,8 +1,6 @@
 import os
 import numpy as np
-import PIL
-from PIL import Image
-from PIL.ImageEnhance import Sharpness as Sharpen
+from PIL import Image, ImageEnhance
 from torch.utils.data import Dataset
 from torchvision import transforms
 import random
@@ -90,17 +88,19 @@ class PersonalizedBase(Dataset):
                               "lanczos": 1,
                               }[interpolation]
 
-        self.aug = random.choice([
-            transforms.RandomHorizontalFlip(p=flip_p),
-            transforms.RandomPerspective(distortion_scale=0.5, p=flip_p ,interpolation=self.interpolation, fill=0),
-            self.rand_sharpen(p=flip_p)
-        ])
-                     
-                                                                                                                                                                                                                                                                        
-    def rand_sharpen(self, image=image, p=None):
-        if random.random() <= p:
-            sharpness = random.choice([random.random() - 1.0, random.random() + 1.0])
-            return Sharpen(image).enhance(sharpness)
+    def augment(self, image) -> Image.Image:
+        if random.random() <= self.flip:
+            rando = [
+                image.transpose(method=random.choice([Image.Transpose.FLIP_LEFT_RIGHT, Image.Transpose.FLIP_TOP_BOTTOM])),
+                image.rotate(random.choice([90, 180, 270])),
+                ImageEnhance.Sharpness(image).enhance(random.choice([random.random()-1.0, random.random()+1.0]))
+            ]
+            choice = random.choice(rando)
+            image = choice
+            data = image.getdata()
+            im = Image.new(mode=image.mode, size=image.size)
+            im = im.putdata(data)
+            return im
     
     def __len__(self):
         return self._length
@@ -132,7 +132,7 @@ class PersonalizedBase(Dataset):
         image = Image.fromarray(img)
         if self.size is not None:
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
-        image = self.aug(image)
+        image = self.augment(image)
 
         img = np.zeros((image.height, image.width, 3), dtype=np.uint8)
         img = np.asarray(image)
