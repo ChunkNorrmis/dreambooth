@@ -87,20 +87,6 @@ class PersonalizedBase(Dataset):
                               "bicubic": 3,
                               "lanczos": 1,
                               }[interpolation]
-
-    def augment(self, image) -> Image.Image:
-        if random.random() <= self.flip_p:
-            rando = [
-                image.transpose(method=random.choice([Image.Transpose.FLIP_LEFT_RIGHT, Image.Transpose.FLIP_TOP_BOTTOM])),
-                image.rotate(random.choice([90, 180, 270])),
-                ImageEnhance.Sharpness(image).enhance(random.choice([random.random()-1.0, random.random()+1.0]))
-            ]
-            choice = random.choice(rando)
-            image = choice
-            data = image.getdata()
-            im = Image.new(mode=image.mode, size=image.size)
-            im = im.putdata(data)
-            return im
     
     def __len__(self):
         return self._length
@@ -120,8 +106,7 @@ class PersonalizedBase(Dataset):
         example["caption"] = text
 
         if self.center_crop:
-            img = np.zeros((image.height, image.width, 3), dtype=np.uint8)
-            img = np.asarray(image)
+            img = np.array(image).astype(np.uint8)
             H, W = img.shape[0], img.shape[1]
             crop = min(W, H)
             img = img[(H - crop) // 2: (H + crop) // 2,
@@ -131,10 +116,12 @@ class PersonalizedBase(Dataset):
         if self.size is not None:
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
         
-        image = self.augment(image)
+        image = random.choice([
+            image.transpose(method=random.choice([0, 1, 2, 3, 4])),
+            ImageEnhance.Sharpness(image).enhance(random.choice([random.random() - 1.0, random.random() + 1.0]))
+        ])
 
-        img = np.zeros((image.height, image.width, 3), dtype=np.uint8)
-        img = np.asarray(image)
+        img = np.array(image).astype(np.uint8)
         img = (img / 127.5 - 1).astype(np.float32)
         example['image'] = img
         
