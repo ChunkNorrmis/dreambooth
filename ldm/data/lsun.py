@@ -24,7 +24,7 @@ class LSUNBase(Dataset):
             "file_path_": [os.path.join(self.data_root, l)
                            for l in self.image_paths],
         }
-
+        self.flip_p = flip_p
         self.size = size
         self.interpolation = {"linear": PIL.Image.LINEAR,
                               "bilinear": PIL.Image.BILINEAR,
