@@ -119,19 +119,18 @@ class PersonalizedBase(Dataset):
             
         example["caption"] = text
 
-        # default to score-sde preprocessing
-
         if self.center_crop:
             img = np.zeros((image.height, image.width, 3), dtype=np.uint8)
             img = np.asarray(image)
             H, W = img.shape[0], img.shape[1]
             crop = min(W, H)
-            img = img[(H - crop) // 2:(H + crop) // 2,
-                      (W - crop) // 2:(W + crop) // 2]
-
-        image = Image.fromarray(img)
+            img = img[(H - crop) // 2: (H + crop) // 2,
+                      (W - crop) // 2: (W + crop) // 2]
+            image = Image.fromarray(img)
+            
         if self.size is not None:
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
+        
         image = self.augment(image)
 
         img = np.zeros((image.height, image.width, 3), dtype=np.uint8)
@@ -140,3 +139,4 @@ class PersonalizedBase(Dataset):
         example['image'] = img
         
         return example
+        
