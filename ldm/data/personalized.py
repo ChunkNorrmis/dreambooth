@@ -43,7 +43,7 @@ class PersonalizedBase(Dataset):
         self.per_image_tokens = per_image_tokens
         self.center_crop = center_crop
         self.mixing_prob = mixing_prob
-
+        self.flip_p = flip_p
         self.coarse_class_text = coarse_class_text
 
         if per_image_tokens:
