@@ -66,20 +66,6 @@ class PersonalizedBase(Dataset):
             self.reg_tokens = OrderedDict([('C', self.coarse_class_text)])
 
         
-    def augment(self, image) -> Image.Image:
-        if random.random() <= self.flip_p:
-            rando = [
-                image.transpose(method=random.choice([Image.Transpose.FLIP_LEFT_RIGHT, Image.Transpose.FLIP_TOP_BOTTOM])),
-                image.rotate(random.choice([90, 180, 270])),
-                ImageEnhance.Sharpness(image).enhance(random.choice([random.random()-1.0, random.random()+1.0]))
-            ]
-            choice = random.choice(rando)
-            image = choice
-            data = image.getdata()
-            im = Image.new(mode=image.mode, size=image.size)
-            im = im.putdata(data)
-            return im
-            
     def __len__(self):
         return self._length
 
@@ -108,8 +94,12 @@ class PersonalizedBase(Dataset):
             
         if self.size is not None:
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
-        
-        image = self.augment(image)
+
+        if random.random() <= self.flip_p:
+            image = random.choice([
+                image.transpose(method=random.choice([0, 1, 2, 3, 4])),
+                ImageEnhance.Sharpness(image).enhance(random.choice([random.random() - 1.0, random.random() + 1.0]))
+            ])
 
         img = np.array(image).astype(np.uint8)
         img = (img / 127.5 - 1).astype(np.float32)
