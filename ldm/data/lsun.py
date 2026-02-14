@@ -33,7 +33,7 @@ class LSUNBase(Dataset):
                               }[interpolation]
 
     def augment(self, image) -> Image.Image:
-        if random.random() <= self.flip:
+        if random.random() <= self.flip_p:
             rando = [
                 image.transpose(method=random.choice([Image.Transpose.FLIP_LEFT_RIGHT, Image.Transpose.FLIP_TOP_BOTTOM])),
                 image.rotate(random.choice([90, 180, 270])),
