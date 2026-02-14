@@ -71,7 +71,7 @@ class PersonalizedBase(Dataset):
         self._length = self.num_images 
 
         self.placeholder_token = placeholder_token
-
+        self.flip_p = flip_p
         self.per_image_tokens = per_image_tokens
         self.center_crop = center_crop
 
