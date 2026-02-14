@@ -99,8 +99,7 @@ class PersonalizedBase(Dataset):
 
 
         if self.center_crop:
-            img = np.zeros((image.height, image.width, 3), dtype=np.uint8)
-            img = np.asarray(image)
+            img = np.array(image).astype(np.uint8)
             H, W = img.shape[0], img.shape[1]
             crop = min(W, H)
             img = img[(H - crop) // 2: (H + crop) // 2,
@@ -112,8 +111,7 @@ class PersonalizedBase(Dataset):
         
         image = self.augment(image)
 
-        img = np.zeros((image.height, image.width, 3), dtype=np.uint8)
-        img = np.asarray(image)
+        img = np.array(image).astype(np.uint8)
         img = (img / 127.5 - 1).astype(np.float32)
         example['image'] = img
         
