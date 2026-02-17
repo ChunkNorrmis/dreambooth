@@ -1,7 +1,6 @@
 import os
 import numpy as np
-from PIL import Image
-from PIL.ImageEnhance import Sharpness as sharpen
+from PIL import Image, ImageEnhance
 from torch.utils.data import Dataset
 import random
 
@@ -49,11 +48,11 @@ class LSUNBase(Dataset):
             image = image.convert("RGB")
 
         if self.center_crop and image.width != image.height:
-            im = np.array(image).astype(np.uint8)
-            H, W = im.shape[0], im.shape[1]
+            img = np.array(image).astype(np.uint8)
+            H, W = img.shape[0], img.shape[1]
             crop = min(W, H)
-            im = im[(H - crop) // 2: (H + crop) // 2, (W - crop) // 2: (W + crop) // 2]
-            image = Image.fromarray(im)
+            img = img[(H - crop) // 2: (H + crop) // 2, (W - crop) // 2: (W + crop) // 2]
+            image = Image.fromarray(img)
 
         if self.size is not None:
             if image.width > self.size or image.height > self.size:
@@ -62,7 +61,7 @@ class LSUNBase(Dataset):
         if random.random() < self.flip_p:
             image = random.choice([
                 image.transpose(method=random.randint(0, 4)),
-                sharpen(image).enhance(random.uniform(-1.0, 2.0))
+                ImageEnhance.Sharpness(image).enhance(random.uniform(-1.0, 2.0))
             ])
 
         img = np.array(image).astype(np.uint8)
