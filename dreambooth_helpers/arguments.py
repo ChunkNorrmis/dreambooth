@@ -135,7 +135,6 @@ def parse_arguments() -> JoePennaDreamboothConfigSchemaV1:
             seed=opt.seed,
             debug=opt.debug,
             gpu=opt.gpu,
-            max_training_steps=opt.max_training_steps,
             save_every_x_steps=opt.save_every_x_steps,
             training_images_folder_path=opt.training_images,
             regularization_images_folder_path=opt.regularization_images,
