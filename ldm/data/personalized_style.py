@@ -2,7 +2,7 @@ import os
 import numpy as np
 import PIL
 from PIL import Image
-from Pil.ImageEnhance import Sharpness as Sharpen
+from Pil.ImageEnhance import Sharpness
 from torch.utils.data import Dataset
 from torchvision import transforms
 import random
@@ -75,7 +75,7 @@ class PersonalizedBase(Dataset):
         self._length = self.num_images 
 
         self.placeholder_token = placeholder_token
-
+        self.sharpen = Sharpness
         self.per_image_tokens = per_image_tokens
         self.center_crop = center_crop
 
@@ -125,7 +125,7 @@ class PersonalizedBase(Dataset):
         if self.flip >= random.random():
             image = random.choice([
                 image.transpose(random.randrange(5)),
-                Sharpen(image).enhance(random.uniform(-0.5, 2.0))
+                self.sharpen(image).enhance(random.uniform(-0.5, 2.0))
             ])
             
         image = np.array(image).astype(np.uint8)
