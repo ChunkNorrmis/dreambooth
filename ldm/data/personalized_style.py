@@ -1,10 +1,8 @@
 import os
 import numpy as np
-import PIL
 from PIL import Image
+from PIL.ImageEnhance import Sharpness as sharpen
 from torch.utils.data import Dataset
-from torchvision import transforms
-
 import random
 
 imagenet_templates_small = [
@@ -54,30 +52,29 @@ per_img_token_list = [
 ]
 
 class PersonalizedBase(Dataset):
-    def __init__(self,
-                 data_root,
-                 size=None,
-                 repeats=100,
-                 interpolation="bicubic",
-                 flip_p=0.5,
-                 set="train",
-                 placeholder_token="*",
-                 per_image_tokens=False,
-                 center_crop=False,
-                 ):
+    def __init__(
+        self,
+        data_root,
+        size,
+        repeats,
+        interpolation="bicubic",
+        flip_p=0.5,
+        set="train",
+        placeholder_token="*",
+        per_image_tokens=False,
+        center_crop=False,
+    ):
 
+        super().__init__()
         self.data_root = data_root
-
         self.image_paths = [os.path.join(self.data_root, file_path) for file_path in os.listdir(self.data_root)]
-
-        # self._length = len(self.image_paths)
         self.num_images = len(self.image_paths)
-        self._length = self.num_images 
-
+        self._length = self.num_images
         self.placeholder_token = placeholder_token
-
+        self.flip_p = flip_p
         self.per_image_tokens = per_image_tokens
         self.center_crop = center_crop
+        self.size = size
 
         if per_image_tokens:
             assert self.num_images < len(per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
@@ -85,13 +82,12 @@ class PersonalizedBase(Dataset):
         if set == "train":
             self._length = self.num_images * repeats
 
-        self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
-                              "bilinear": PIL.Image.BILINEAR,
-                              "bicubic": PIL.Image.BICUBIC,
-                              "lanczos": PIL.Image.LANCZOS,
+        self.interpolation = {"nearest": 0,
+                              "bilinear": 2,
+                              "bicubic": 3,
+                              "lanczos": 1,
                               }[interpolation]
-        self.flip = transforms.RandomHorizontalFlip(p=flip_p)
+
 
     def __len__(self):
         return self._length
@@ -107,23 +103,28 @@ class PersonalizedBase(Dataset):
             text = random.choice(imagenet_dual_templates_small).format(self.placeholder_token, per_img_token_list[i % self.num_images])
         else:
             text = random.choice(imagenet_templates_small).format(self.placeholder_token)
-            
+
         example["caption"] = text
 
-        # default to score-sde preprocessing
-        img = np.array(image).astype(np.uint8)
-        
-        if self.center_crop:
-            crop = min(img.shape[0], img.shape[1])
-            h, w, = img.shape[0], img.shape[1]
-            img = img[(h - crop) // 2:(h + crop) // 2,
-                (w - crop) // 2:(w + crop) // 2]
+        if self.center_crop and image.width != image.height:
+            im = np.array(image).astype(np.uint8)
+            H, W = im.shape[0], im.shape[1]
+            crop = min(W, H)
+            im = im[(H - crop) // 2: (H + crop) // 2, (W - crop) // 2: (W + crop) // 2]
+            image = Image.fromarray(im)
 
-        image = Image.fromarray(img)
         if self.size is not None:
-            image = image.resize((self.size, self.size), resample=self.interpolation)
+            if image.width > self.size or image.height > self.size:
+                image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
 
-        image = self.flip(image)
-        image = np.array(image).astype(np.uint8)
-        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
+        if random.random() < self.flip_p:
+            image = random.choice([
+                image.transpose(method=random.randint(0, 4)),
+                sharpen(image).enhance(random.uniform(-1.0, 2.0))
+            ])
+
+        img = np.array(image).astype(np.uint8)
+        img = (img / 127.5 - 1).astype(np.float32)
+        example['image'] = img
+
         return example
