@@ -44,7 +44,6 @@ class JoePennaDreamboothConfigSchemaV1():
         self.accum_grads = accum_grads
         self.res = res
         self.project_name = project_name
-        self.project_config_filename = f"{self.config_date_time}-{self.project_name}-config.json"
         self.seed = seed
         self.save_every_x_steps = save_every_x_steps
         self.debug = debug
@@ -57,6 +56,7 @@ class JoePennaDreamboothConfigSchemaV1():
             self.config_date_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
         else:
             self.config_date_time = config_date_time
+        self.project_config_filename = f"{self.config_date_time}-{self.project_name}-config.json"
 
         if run_seed_everything:
             seed_everything(self.seed)
