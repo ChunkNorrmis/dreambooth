@@ -3,7 +3,7 @@ from typing import OrderedDict
 import numpy as np
 import PIL
 from PIL import Image
-from PIL.ImageEnhance import Sharpness as Sharpen
+from PIL.ImageEnhance import Sharpness
 from torch.utils.data import Dataset
 from torchvision import transforms
 from captionizer import caption_from_path, generic_captions_from_path
@@ -44,7 +44,7 @@ class PersonalizedBase(Dataset):
         self.per_image_tokens = per_image_tokens
         self.center_crop = center_crop
         self.mixing_prob = mixing_prob
-
+        self.sharpen = Sharpness
         self.coarse_class_text = coarse_class_text
 
         if per_image_tokens:
@@ -96,7 +96,7 @@ class PersonalizedBase(Dataset):
         if self.flip >= random.random():
             image = random.choice([
                 image.transpose(random.randrange(5)),
-                Sharpen(image).enhance(random.uniform(-0.5, 2.0))
+                self.sharpen(image).enhance(random.uniform(-0.5, 2.0))
             ])
             
         image = np.array(image).astype(np.uint8)
