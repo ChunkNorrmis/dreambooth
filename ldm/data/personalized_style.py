@@ -63,7 +63,7 @@ class PersonalizedBase(Dataset):
                  set="train",
                  placeholder_token="*",
                  per_image_tokens=False,
-                 center_crop=False,
+                 center_crop=True,
                  ):
 
         self.data_root = data_root
