@@ -1,8 +1,7 @@
 import os
 from typing import OrderedDict
 import numpy as np
-from PIL import Image
-from PIL.ImageEnhance import Sharpness as sharpen
+from PIL import Image, ImageEnhance
 from torch.utils.data import Dataset
 from captionizer import caption_from_path, generic_captions_from_path
 from captionizer import find_images
@@ -84,11 +83,11 @@ class PersonalizedBase(Dataset):
             example["caption"] = caption_from_path(image_path, self.data_root, self.coarse_class_text, self.placeholder_token)
 
         if self.center_crop and image.width != image.height:
-            im = np.array(image).astype(np.uint8)
-            H, W = im.shape[0], im.shape[1]
+            img = np.array(image).astype(np.uint8)
+            H, W = img.shape[0], img.shape[1]
             crop = min(W, H)
-            im = im[(H - crop) // 2: (H + crop) // 2, (W - crop) // 2: (W + crop) // 2]
-            image = Image.fromarray(im)
+            img = img[(H - crop) // 2: (H + crop) // 2, (W - crop) // 2: (W + crop) // 2]
+            image = Image.fromarray(img)
 
         if self.size is not None:
             if image.width > self.size or image.height > self.size:
@@ -97,9 +96,10 @@ class PersonalizedBase(Dataset):
         if random.random() < self.flip_p:
             image = random.choice([
                 image.transpose(method=random.randint(0, 4)),
-                sharpen(image).enhance(random.uniform(-1.0, 2.0))
+                ImageEnhance.Sharpness(image).enhance(random.uniform(-1.0, 2.0))
             ])
-
+            
+        img = np.zeros(image.height, image.width, 3)
         img = np.array(image).astype(np.uint8)
         img = (img / 127.5 - 1).astype(np.float32)
         example['image'] = img
