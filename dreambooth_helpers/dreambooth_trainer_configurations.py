@@ -195,6 +195,7 @@ def get_dreambooth_data_config(config: JoePennaDreamboothConfigSchemaV1) -> dict
                     "placeholder_token": config.token,
                     "token_only": config.token_only or not config.class_word,
                     "flip_p": config.flip_percent,
+                    "center_crop": config.center_crop
                 }
             },
             "reg": reg_block if config.regularization_images_folder_path is not None and config.regularization_images_folder_path != '' else None,
