@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import PIL
-from PIL import Image
-from PIL.ImageEnhance import Sharpness
+from PIL import Image, ImageFilter
+from PIL.ImageEnhance import Sharpness as Sharpen
 from torch.utils.data import Dataset
 from torchvision import transforms
 import random
@@ -26,7 +26,7 @@ class LSUNBase(Dataset):
             "file_path_": [os.path.join(self.data_root, l)
                            for l in self.image_paths],
         }
-        self.sharpen = Sharpness
+                     
         self.size = size
         self.interpolation = {"linear": PIL.Image.LINEAR,
                               "bilinear": PIL.Image.BILINEAR,
@@ -55,10 +55,12 @@ class LSUNBase(Dataset):
         if image.width > self.size or image.height > self.size:
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
 
-        if self.flip >= random.random():
+        if self.flip > random.random():
             image = random.choice([
-                image.transpose(random.randrange(5)),
-                self.sharpen(image).enhance(random.uniform(-0.5, 2.0))
+                image.transpose(random.randrange(0, 2)),
+                Sharpen(image).enhance(random.uniform(1.1, 3.0)),
+                image.filter(ImageFilter.BLUR),
+                image.transpose(random.randrange(2, 5)),
             ])
             
         image = np.array(image).astype(np.uint8)
