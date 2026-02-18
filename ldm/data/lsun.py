@@ -33,7 +33,7 @@ class LSUNBase(Dataset):
                               "bicubic": PIL.Image.BICUBIC,
                               "lanczos": PIL.Image.LANCZOS,
                               }[interpolation]
-        self.flip = flip_p
+        self.odds = flip_p
 
     def __len__(self):
         return self._length
@@ -44,23 +44,23 @@ class LSUNBase(Dataset):
         if not image.mode == "RGB":
             image = image.convert("RGB")
 
-        if self.center_crop and image.width != image.height:
+        if image.width != image.height:
             img = np.array(image).astype(np.uint8)
             crop = min(img.shape[0], img.shape[1])
             h, w, = img.shape[0], img.shape[1]
-            img =1 img[(h - crop) // 2:(h + crop) // 2,
+            img = img[(h - crop) // 2:(h + crop) // 2,
                       (w - crop) // 2:(w + crop) // 2]
             image = Image.fromarray(img)
 
-        if image.width > self.size or image.height > self.size:
+        if image.width != self.size or image.height != self.size:
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
 
-        if self.flip > random.random():
+        if self.odds > random.random():
             image = random.choice([
                 image.transpose(random.randrange(0, 2)),
                 Sharpen(image).enhance(random.uniform(1.1, 3.0)),
                 image.filter(ImageFilter.BLUR),
-                image.transpose(random.randrange(2, 5)),
+                image.transpose(random.randrange(2, 5))
             ])
             
         image = np.array(image).astype(np.uint8)
