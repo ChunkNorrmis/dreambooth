@@ -123,10 +123,10 @@ class PersonalizedBase(Dataset):
 
         if self.odds > random.random():
             image = random.choice([
-                image.transpose(random.randrange(0, 2)),
-                Sharpen(image).enhance(random.uniform(1.1, 3.0)),
-                image.filter(ImageFilter.BLUR),
-                image.transpose(random.randrange(2, 5))
+                image.transpose(random.randrange(5)),
+                Sharpen(image).enhance(random.uniform(0.5, 3.0)),
+                #image.filter(ImageFilter.BLUR),
+                #image.transpose(random.randrange(2, 5))
             ])
             
         image = np.array(image).astype(np.uint8)
