@@ -96,7 +96,7 @@ class PersonalizedBase(Dataset):
         if self.flip >= random.random():
             image = random.choice([
                 image.transpose(random.randrange(5)),
-                self.sharpen(image).enhance(random.uniform(-0.5, 2.0))
+                self.sharpen(image).enhance(random.uniform(0.0, 3.0))
             ])
             
         image = np.array(image).astype(np.uint8)
