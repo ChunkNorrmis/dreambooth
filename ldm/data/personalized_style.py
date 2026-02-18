@@ -124,7 +124,7 @@ class PersonalizedBase(Dataset):
         if self.odds > random.random():
             image = random.choice([
                 image.transpose(random.randrange(5)),
-                Sharpen(image).enhance(random.uniform(0.5, 3.0)),
+                Sharpen(image).enhance(random.uniform(-0.5, 3.0)),
                 #image.filter(ImageFilter.BLUR),
                 #image.transpose(random.randrange(2, 5))
             ])
