@@ -112,8 +112,8 @@ class PersonalizedBase(Dataset):
 
         if self.center_crop and image.width != image.height:
             img = np.array(image).astype(np.uint8)
-            crop = min(img.shape[0], img.shape[1])
-            h, w, = img.shape[0], img.shape[1]
+            h, w = img.shape[0], img.shape[1]
+            crop = min(h, w)
             img = img[(h - crop) // 2:(h + crop) // 2,
                       (w - crop) // 2:(w + crop) // 2]
             image = Image.fromarray(img)
