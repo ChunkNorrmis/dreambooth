@@ -1,8 +1,7 @@
 import os
 import numpy as np
 import PIL
-from PIL import Image, ImageFilter
-from Pil.ImageEnhance import Sharpness as Sharpen
+from PIL import Image, ImageFilter, ImageEnhance
 from torch.utils.data import Dataset
 from torchvision import transforms
 import random
@@ -92,6 +91,24 @@ class PersonalizedBase(Dataset):
                               }[interpolation]
         self.odds = flip_p
 
+
+    def augment(self, image):
+        def _sharpen(image):
+            sharpen = random.uniform(1.0, 3.0)
+            return ImageEnhance.Sharpness(image).enhance(sharpen)
+
+        def _flip_turn(image):
+            orientation = random.choice([
+                Image.Transpose.ROTATE_180,
+                Image.Transpose.FLIP_TOP_BOTTOM,
+                Image.Transpose.ROTATE_90,                
+                Image.Transpose.FLIP_LEFT_RIGHT,
+                Image.Transpose.ROTATE_270
+            ])
+            return image.transpose(orientation)
+
+        return random.choice([_flip_turn(image), _sharpen(image)])
+
     def __len__(self):
         return self._length
 
@@ -121,13 +138,8 @@ class PersonalizedBase(Dataset):
         if image.width != self.size or image.height != self.size:
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
 
-        if self.odds > random.random():
-            image = random.choice([
-                image.transpose(random.randrange(5)),
-                Sharpen(image).enhance(random.uniform(-0.5, 3.0)),
-                #image.filter(ImageFilter.BLUR),
-                #image.transpose(random.randrange(2, 5))
-            ])
+        if random.random() < self.odds:
+            image = self.augment(image)
             
         image = np.array(image).astype(np.uint8)
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
