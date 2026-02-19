@@ -89,25 +89,18 @@ class PersonalizedBase(Dataset):
                               "bicubic": PIL.Image.BICUBIC,
                               "lanczos": PIL.Image.LANCZOS,
                               }[interpolation]
-        self.odds = flip_p
+        self.chance = flip_p
 
 
     def augment(self, image):
-        def _sharpen(image):
-            sharpen = random.uniform(1.0, 3.0)
-            return ImageEnhance.Sharpness(image).enhance(sharpen)
-
-        def _flip_turn(image):
-            orientation = random.choice([
-                Image.Transpose.ROTATE_180,
-                Image.Transpose.FLIP_TOP_BOTTOM,
-                Image.Transpose.ROTATE_90,                
-                Image.Transpose.FLIP_LEFT_RIGHT,
-                Image.Transpose.ROTATE_270
-            ])
-            return image.transpose(orientation)
-
-        return random.choice([_flip_turn(image), _sharpen(image)])
+        return random.choice([
+            image.transpose(Image.Transpose.ROTATE_180),
+            image.transpose(Image.Transpose.FLIP_TOP_BOTTOM),
+            image.transpose(Image.Transpose.ROTATE_90),
+            image.transpose(Image.Transpose.FLIP_LEFT_RIGHT),
+            image.transpose(Image.Transpose.ROTATE_270),
+            ImageEnhance.Sharpness(image).enhance(random.uniform(0.5, 2.0))
+        ])
 
     def __len__(self):
         return self._length
@@ -138,7 +131,7 @@ class PersonalizedBase(Dataset):
         if image.width != self.size or image.height != self.size:
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
 
-        if random.random() < self.odds:
+        if random.random() < self.chance:
             image = self.augment(image)
             
         image = np.array(image).astype(np.uint8)
