@@ -5,40 +5,19 @@ import glob
 import shutil
 import sys
 from datetime import datetime, timezone
-
 import torch
 from pytorch_lightning import seed_everything
 
 
 class JoePennaDreamboothConfigSchemaV1():
-    def __init__(self):
-        super().__init__()
-        self.schema = 1
+    def __init__(self, schema=1):
+        self.schema = schema
 
-    def saturate(
-            self,
-            project_name,
-            save_every_x_steps,
-            training_images_folder_path,
-            regularization_images_folder_path,
-            token,
-            class_word,
-            flip_percent,
-            learning_rate,
-            model_path,
-            repeats,
-            batch_size,
-            accum_grads,
-            res,
-            seed,
-            token_only,
-            debug,
-            gpu,
-            model_repo_id=None,
-            run_seed_everything=True,
-            config_date_time=None
-    ):
 
+    def saturate(self, project_name, save_every_x_steps, training_images_folder_path, regularization_images_folder_path, token, gpu,
+                class_word, flip_percent, learning_rate, model_path, repeats, batch_size, accum_grads, res, seed, token_only, debug,
+                model_repo_id=None, run_seed_everything=True, config_date_time=None):
+        
         self.repeats = repeats
         self.batch_size = batch_size
         self.accum_grads = accum_grads
@@ -82,7 +61,6 @@ class JoePennaDreamboothConfigSchemaV1():
 
         self.training_images_count = len(_training_image_paths)
         self.training_images = _training_image_paths
-
         self.max_training_steps = self.training_images_count * self.repeats
 
         if token_only is False and regularization_images_folder_path is not None and regularization_images_folder_path != '':
@@ -111,8 +89,8 @@ class JoePennaDreamboothConfigSchemaV1():
             raise Exception(f"Model Path Not Found: '{self.model_path}'.")
 
         self.validate_gpu_vram()
-
         self._create_log_folders()
+
 
     def validate_gpu_vram(self):
         def convert_size(size_bytes):
@@ -124,18 +102,14 @@ class JoePennaDreamboothConfigSchemaV1():
             s = round(size_bytes / p, 2)
             return "%s %s" % (s, size_name[i])
 
-            # Check total available GPU memory
-
         gpu_vram = int(torch.cuda.get_device_properties(self.gpu).total_memory)
         print(f"gpu_vram: {convert_size(gpu_vram)}")
         twenty_one_gigabytes = 22548578304
         if gpu_vram < twenty_one_gigabytes:
             raise Exception(f"VRAM: Currently unable to run on less than {convert_size(twenty_one_gigabytes)} of VRAM.")
 
-    def saturate_from_file(
-            self,
-            config_file_path: str,
-    ):
+
+    def saturate_from_file(self, config_file_path: str):
         if not os.path.exists(config_file_path):
             print(f"{config_file_path} not found.", file=sys.stderr)
             return None
@@ -165,8 +139,10 @@ class JoePennaDreamboothConfigSchemaV1():
             else:
                 print(f"Unrecognized schema: {config_parsed['schema']}", file=sys.stderr)
 
+
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
 
     def create_checkpoint_file_name(self, steps: str):
         date_string = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
@@ -175,6 +151,7 @@ class JoePennaDreamboothConfigSchemaV1():
                f"{self.training_images_count}_training_images_" \
                f"{self.token}_token_" \
                f"{self.class_word}_class_word.ckpt".replace(" ", "_")
+
 
     def save_config_to_file(
             self,
@@ -194,8 +171,10 @@ class JoePennaDreamboothConfigSchemaV1():
             print(project_config_json)
             print(f"✅ {self.project_config_filename} successfully generated.  Proceed to training.")
 
+
     def get_training_folder_name(self) -> str:
         return f"{self.config_date_time}_{self.project_name}"
+
 
     def log_directory(self) -> str:
         return os.path.join("logs", self.get_training_folder_name())
