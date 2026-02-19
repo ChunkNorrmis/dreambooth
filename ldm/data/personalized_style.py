@@ -116,7 +116,7 @@ class PersonalizedBase(Dataset):
             text = random.choice(imagenet_dual_templates_small).format(self.placeholder_token, per_img_token_list[i % self.num_images])
         else:
             text = random.choice(imagenet_templates_small).format(self.placeholder_token)
-            
+
         example["caption"] = text
 
 
@@ -133,7 +133,7 @@ class PersonalizedBase(Dataset):
 
         if self.chance > random.random():
             image = self.augment(image)
-            
+
         image = np.array(image).astype(np.uint8)
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
         return example
