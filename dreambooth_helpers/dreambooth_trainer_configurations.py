@@ -173,7 +173,7 @@ def get_dreambooth_data_config(config: JoePennaDreamboothConfigSchemaV1) -> dict
             "repeats": 1,
             "data_root": config.regularization_images_folder_path,
             "coarse_class_text": config.class_word,
-            "placeholder_token": config.token,
+            "placeholder_token": config.token
         }
     }
 
