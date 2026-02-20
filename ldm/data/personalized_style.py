@@ -1,7 +1,8 @@
 import os
 import numpy as np
 import PIL
-from PIL import Image, ImageFilter, ImageEnhance
+from PIL import Image, ImageFilter
+from PIL.ImageEnhance import Sharpness as Sharpen
 from torch.utils.data import Dataset
 from torchvision import transforms
 import random
@@ -53,18 +54,18 @@ per_img_token_list = [
 ]
 
 class PersonalizedBase(Dataset):
-    def __init__(self,
-                 data_root,
-                 size=None,
-                 repeats=100,
-                 interpolation="bicubic",
-                 flip_p=0.5,
-                 set="train",
-                 placeholder_token="*",
-                 per_image_tokens=False,
-                 center_crop=True,
-                 ):
-                     
+    def __init__(
+        self,
+        data_root,
+        size=512,
+        repeats=100,
+        interpolation="bicubic",
+        flip_p=0.5,
+        set="train",
+        placeholder_token="*",
+        per_image_tokens=False,
+        center_crop=True,
+    ):
         super().__init__()                            
         self.data_root = data_root
         self.image_paths = [os.path.join(self.data_root, file_path) for file_path in os.listdir(self.data_root)]
@@ -79,29 +80,21 @@ class PersonalizedBase(Dataset):
             assert self.num_images < len(per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
 
         if set == "train":
-            self._length = self.num_images * repeats
+            self._length = self._length * repeats
 
         self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
-                              "bilinear": PIL.Image.BILINEAR,
-                              "bicubic": PIL.Image.BICUBIC,
-                              "lanczos": PIL.Image.LANCZOS,
-                              }[interpolation]
+        self.interpolation = {
+            "linear": PIL.Image.LINEAR,
+            "bilinear": PIL.Image.BILINEAR,
+            "bicubic": PIL.Image.BICUBIC,
+            "lanczos": PIL.Image.LANCZOS,
+        }[interpolation]
+
         self.chance = flip_p
 
 
     def __len__(self):
         return self._length
-
-    def augment(self, image):
-        return random.choice([
-            image.transpose(Image.Transpose.ROTATE_180),
-            image.transpose(Image.Transpose.FLIP_TOP_BOTTOM),
-            image.transpose(Image.Transpose.ROTATE_90),
-            image.transpose(Image.Transpose.FLIP_LEFT_RIGHT),
-            image.transpose(Image.Transpose.ROTATE_270),
-            ImageEnhance.Sharpness(image).enhance(random.uniform(0.5, 2.0))
-        ])
 
     def __getitem__(self, i):
         example = {}
@@ -119,7 +112,7 @@ class PersonalizedBase(Dataset):
 
 
         if self.center_crop and image.width != image.height:
-            img = np.asarray(image).astype(np.uint8)
+            img = np.array(image).astype(np.uint8)
             h, w = img.shape[0], img.shape[1]
             crop = min(h, w)
             img = img[(h - crop) // 2:(h + crop) // 2,
@@ -130,8 +123,14 @@ class PersonalizedBase(Dataset):
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
 
         if self.chance > random.random():
-            image = self.augment(image)
+            image = random.choice([
+                image.transpose(random.randrange(0, 2),
+                image.transpose(random.randrange(2, 5),
+                Sharpen(image).enhance(random.uniform(0.5, 2.0))
+            ])
 
         image = np.array(image).astype(np.uint8)
-        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
+        image = (image / 127.5 - 1.0).astype(np.float32)
+        example["image"] = image
         return example
+
