@@ -1,21 +1,22 @@
 import os
 import numpy as np
 import PIL
-from PIL import Image, ImageFilter, ImageEnhance
+from PIL import Image, ImageFilter
+from PIL.ImageEnhance import Sharpness as Sharpen
 from torch.utils.data import Dataset
 from torchvision import transforms
 import random
 
 
 class LSUNBase(Dataset):
-    def __init__(self,
-                 txt_file,
-                 data_root,
-                 size=None,
-                 interpolation="bicubic",
-                 flip_p=0.5
-                 ):
-
+    def __init__(
+        self,
+        txt_file,
+        data_root,
+        size=None,
+        interpolation="bicubic",
+        flip_p=0.5
+    ):
         super().__init__()
         self.data_paths = txt_file
         self.data_root = data_root
@@ -27,28 +28,20 @@ class LSUNBase(Dataset):
             "file_path_": [os.path.join(self.data_root, l)
                            for l in self.image_paths],
         }
-                     
+
         self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
-                              "bilinear": PIL.Image.BILINEAR,
-                              "bicubic": PIL.Image.BICUBIC,
-                              "lanczos": PIL.Image.LANCZOS,
-                              }[interpolation]
+        self.interpolation = {
+            "linear": PIL.Image.LINEAR,
+            "bilinear": PIL.Image.BILINEAR,
+            "bicubic": PIL.Image.BICUBIC,
+            "lanczos": PIL.Image.LANCZOS,
+        }[interpolation]
+
         self.chance = flip_p
 
 
     def __len__(self):
         return self._length
-
-    def augment(self, image):
-        return random.choice([
-            image.transpose(Image.Transpose.ROTATE_180),
-            image.transpose(Image.Transpose.FLIP_TOP_BOTTOM),
-            image.transpose(Image.Transpose.ROTATE_90),
-            image.transpose(Image.Transpose.FLIP_LEFT_RIGHT),
-            image.transpose(Image.Transpose.ROTATE_270),
-            ImageEnhance.Sharpness(image).enhance(random.uniform(0.5, 2.0))
-        ])
 
     def __getitem__(self, i):
         example = dict((k, self.labels[k][i]) for k in self.labels)
@@ -68,7 +61,11 @@ class LSUNBase(Dataset):
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
 
         if random.random() < self.chance:
-            image = self.augment(image)
+            image = random.choice([
+                image.transpose(random.randrange(0, 2),
+                image.transpose(random.randrange(2, 5),
+                Sharpen(image).enhance(random.uniform(0.5, 2.0))
+            ])
             
         image = np.array(image).astype(np.uint8)
         example["image"] = (image / 127.5 - 1.0).astype(np.float32)
