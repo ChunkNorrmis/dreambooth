@@ -124,8 +124,8 @@ class PersonalizedBase(Dataset):
 
         if self.chance > random.random():
             image = random.choice([
-                image.transpose(random.randrange(0, 2),
-                image.transpose(random.randrange(2, 5),
+                image.transpose(random.randrange(0, 2)),
+                image.transpose(random.randrange(2, 5)),
                 Sharpen(image).enhance(random.uniform(0.5, 2.0))
             ])
 
