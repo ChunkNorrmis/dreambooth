@@ -82,12 +82,12 @@ class PersonalizedBase(Dataset):
             example["caption"] = caption_from_path(image_path, self.data_root, self.coarse_class_text, self.placeholder_token)
 
         if self.center_crop and image.width != image.height:
-            image = np.array(image).astype(np.uint8)
-            h, w = image.shape[0], image.shape[1]
+            img = np.array(image).astype(np.uint8)
+            h, w = img.shape[0], img.shape[1]
             crop = min(h, w)
-            image = image[(h - crop) // 2:(h + crop) // 2,
+            img = img[(h - crop) // 2:(h + crop) // 2,
                       (w - crop) // 2:(w + crop) // 2]
-            image = Image.fromarray(image)
+            image = Image.fromarray(img)
 
         if image.width != self.size or image.height != self.size:
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
@@ -99,6 +99,6 @@ class PersonalizedBase(Dataset):
             ])
             
         image = np.array(image).astype(np.uint8)
-        image = (image / 127.5 - 1 ).astype(np.float32)
+        image = (image / 127.5 - 1).astype(np.float32)
         example["image"] = image
         return example
