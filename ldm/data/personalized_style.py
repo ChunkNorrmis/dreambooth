@@ -90,7 +90,7 @@ class PersonalizedBase(Dataset):
             "lanczos": PIL.Image.LANCZOS,
         }[interpolation]
 
-        self.chance = flip_p
+        self.flip = flip_p
 
 
     def __len__(self):
@@ -122,14 +122,14 @@ class PersonalizedBase(Dataset):
         if image.width != self.size or image.height != self.size:
             image = image.resize((self.size, self.size), resample=self.interpolation, reducing_gap=3)
 
-        if self.chance > random.random():
+        if self.flip > random.random():
             image = random.choice([
                 image.transpose(random.randrange(0, 5)),
-                Sharpen(image).enhance(random.uniform(0.5, 2.0))
+                Sharpen(image).enhance(random.uniform(-1.0, 2.0))
             ])
 
         image = np.array(image).astype(np.uint8)
-        img = (image / 127.5 - 1.0).astype(np.float32)
-        example["image"] = img
+        image = (image / 127.5 - 1).astype(np.float32)
+        example["image"] = image
         return example
 
