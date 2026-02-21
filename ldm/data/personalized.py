@@ -95,10 +95,10 @@ class PersonalizedBase(Dataset):
         if self.chance > random.random():
             image = random.choice([
                 image.transpose(random.randrange(0, 5)),
-                Sharpen(image).enhance(random.uniform(0.5, 2.0))
+                Sharpen(image).enhance(random.uniform(-1.0, 2.0))
             ])
             
         image = np.array(image).astype(np.uint8)
-        img = (image / 127.5 - 1.0).astype(np.float32)
-        example["image"] = img
+        image = (image / 127.5 - 1 ).astype(np.float32)
+        example["image"] = image
         return example
